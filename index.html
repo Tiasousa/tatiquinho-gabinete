@@ -4,6 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Gabinete Digital — Tatiquinho</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0E3B2A">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Tatiquinho">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <style>
@@ -114,8 +122,8 @@
   .link-wa:hover{text-decoration:underline;}
 
   .badge{padding:4px 10px;border-radius:20px;font-size:10px;font-weight:800;letter-spacing:.2px;display:inline-block;}
-  .badge.CONCLUIDO,.badge.SIM,.badge.ENTREGUE{background:rgba(22,163,74,.18);color:#3FD17D;border:1px solid rgba(63,209,125,.3);}
-  .badge.EM_ANALISE{background:rgba(232,174,0,.18);color:#F2C43D;border:1px solid rgba(242,196,61,.3);}
+  .badge.CONCLUIDO,.badge.SIM,.badge.ENTREGUE,.badge.CONFIRMADO,.badge.REALIZADO{background:rgba(22,163,74,.18);color:#3FD17D;border:1px solid rgba(63,209,125,.3);}
+  .badge.EM_ANALISE,.badge.PLANEJAMENTO{background:rgba(232,174,0,.18);color:#F2C43D;border:1px solid rgba(242,196,61,.3);}
   .badge.CANCELADO,.badge.NAO{background:rgba(229,72,77,.18);color:#FF8E92;border:1px solid rgba(255,142,146,.3);}
   .badge.USANDO{background:rgba(232,174,0,.18);color:#F2C43D;border:1px solid rgba(242,196,61,.3);}
 
@@ -258,9 +266,23 @@ let USUARIO = null; // { uid, nome, cargo, ativo, email }
 let paginaAtual = 'dashboard';
 let pararVigiaPerfil = null; // função pra desligar o listener ao sair
 
-const TIPOS_ATENDIMENTO = ['CESTA BASICA','CONSULTA MED','DOACOES','EMENDA IMPOSITIVA','EMPREGO','EQUIPAMENTOS','ESCOLA','EXAME MED','OUTROS','PATROCINIO','REMEDIO','TRANSPORTE','CIRURGIA','TROCA DE LAMPADAS'];
 const STATUS_ATENDIMENTO = ['EM ANALISE','CONCLUIDO','CANCELADO'];
 const TIPOS_DOCUMENTO = ['RG','CPF','CONSULTA MEDICA','RECEITA','LAUDO','COMPROVANTE','OUTRO'];
+const STATUS_EVENTO = ['PLANEJAMENTO','CONFIRMADO','REALIZADO','CANCELADO'];
+
+// Tipos de Atendimento e de Equipamento agora são configuráveis (só ADMIN
+// cadastra, na aba Configurações) em vez de uma lista fixa no código.
+let tiposAtendimentoCache = [];
+let tiposEquipamentoCache = [];
+async function carregarTiposConfiguraveis(){
+  try{
+    tiposAtendimentoCache = await listarColecaoSimples('tiposAtendimento');
+    tiposEquipamentoCache = await listarColecaoSimples('tiposEquipamento');
+  }catch(erro){
+    tiposAtendimentoCache = [];
+    tiposEquipamentoCache = [];
+  }
+}
 
 function normalizarTexto(txt){
   return String(txt||'').trim().toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
@@ -347,7 +369,7 @@ onAuthStateChanged(auth, async (user) => {
   });
 });
 
-function iniciarApp(){
+async function iniciarApp(){
   document.getElementById('telaLogin').classList.add('hidden');
   document.getElementById('app').classList.remove('hidden');
   document.getElementById('nomeTopo').innerText = USUARIO.nome;
@@ -360,6 +382,7 @@ function iniciarApp(){
   document.getElementById('saudacaoTopo').innerText = saud + ', ' + USUARIO.nome.split(' ')[0] + '!';
 
   montarMenu();
+  await carregarTiposConfiguraveis();
   irPara('dashboard');
 }
 
@@ -371,12 +394,13 @@ function rotuloCargo(c){
 function montarMenu(){
   const itens = [
     {id:'dashboard',label:'Dashboard'},
+    {id:'eventos',label:'Eventos'},
     {id:'atendimentos',label:'Atendimentos'},
     {id:'transportes',label:'Transportes'},
     {id:'equipamentos',label:'Equipamentos'},
     {id:'agenda',label:'Agenda'}
   ];
-  if(USUARIO.cargo === 'ADMIN') itens.push({id:'usuarios',label:'Usuários'});
+  if(USUARIO.cargo === 'ADMIN') itens.push({id:'configuracoes',label:'Configurações'}, {id:'usuarios',label:'Usuários'});
   const nav = document.getElementById('menuNav');
   nav.innerHTML = '';
   itens.forEach(it=>{
@@ -397,7 +421,7 @@ function irPara(pagina){
   paginaAtual = pagina;
   marcarMenuAtivo(pagina);
   document.getElementById('conteudo').classList.toggle('modo-agenda', pagina==='agenda');
-  const funcoes = { dashboard:renderDashboard, atendimentos:renderAtendimentos, transportes:renderTransportes, equipamentos:renderEquipamentos, agenda:renderAgenda, usuarios:renderUsuarios };
+  const funcoes = { dashboard:renderDashboard, eventos:renderEventos, atendimentos:renderAtendimentos, transportes:renderTransportes, equipamentos:renderEquipamentos, agenda:renderAgenda, usuarios:renderUsuarios, configuracoes:renderConfiguracoes };
   funcoes[pagina]();
 }
 
@@ -405,6 +429,12 @@ function irPara(pagina){
 async function listarColecao(nome){
   const snap = await getDocs(query(collection(db,nome), orderBy('criadoEm','desc')));
   return snap.docs.map(d=>({ id:d.id, ...d.data() }));
+}
+// Listagem simples, sem depender do campo criadoEm — usada pras coleções de
+// configuração (tipos), que podem ser cadastradas de qualquer jeito.
+async function listarColecaoSimples(nome){
+  const snap = await getDocs(collection(db,nome));
+  return snap.docs.map(d=>({ id:d.id, ...d.data() })).sort((a,b)=>String(a.nome||'').localeCompare(String(b.nome||'')));
 }
 async function salvarDoc(colecaoNome, id, dados){
   dados.ultimaEdicaoPor = USUARIO.nome;
@@ -536,7 +566,7 @@ window.abrirModalAtendimento = function(registro){
         <div><label>Telefone</label><input id="m_telefone" value="${registro.telefone||''}" placeholder="64 99999-0000"></div>
         <div class="campo-2"><label>Endereço</label><input id="m_endereco" value="${registro.endereco||''}"></div>
         <div><label>Bairro</label><input id="m_bairro" value="${registro.bairro||''}"></div>
-        <div><label>Tipo</label><select id="m_tipo">${TIPOS_ATENDIMENTO.map(t=>`<option ${t===registro.tipoAtendimento?'selected':''}>${t}</option>`).join('')}</select></div>
+        <div><label>Tipo</label><select id="m_tipo">${tiposAtendimentoCache.length ? tiposAtendimentoCache.map(t=>`<option ${t.nome===registro.tipoAtendimento?'selected':''}>${t.nome}</option>`).join('') : '<option value="">Nenhum tipo cadastrado — vá em Configurações</option>'}</select></div>
         <div><label>Status</label><select id="m_status">${STATUS_ATENDIMENTO.map(s=>`<option ${s===registro.status?'selected':''}>${s}</option>`).join('')}</select></div>
         <div><label>Responsável</label><input id="m_responsavel" value="${registro.responsavel||''}"></div>
         <div class="campo-2"><label>Observações</label><textarea id="m_obs" rows="3">${registro.observacoes||''}</textarea></div>
@@ -695,7 +725,7 @@ window.abrirModalEquipamento = function(registro){
       <h3>${registro.id ? 'Editar' : 'Novo'} Empréstimo</h3>
       <div class="modal-grid">
         <div><label>Nome</label><input id="e_nome" value="${registro.nome||''}"></div>
-        <div><label>Equipamento</label><input id="e_equipamento" value="${registro.equipamento||''}"></div>
+        <div><label>Equipamento</label><select id="e_equipamento">${tiposEquipamentoCache.length ? tiposEquipamentoCache.map(t=>`<option ${t.nome===registro.equipamento?'selected':''}>${t.nome}</option>`).join('') : '<option value="">Nenhum tipo cadastrado — vá em Configurações</option>'}</select></div>
         <div><label>Contato</label><input id="e_contato" value="${registro.contato||''}"></div>
         <div><label>Status</label><select id="e_devolucao"><option ${registro.devolucao==='USANDO'?'selected':''}>USANDO</option><option ${registro.devolucao==='ENTREGUE'?'selected':''}>ENTREGUE</option></select></div>
       </div>
@@ -908,6 +938,193 @@ window.salvarEvento = async function(id){
 };
 
 // ============================================================
+// EVENTOS — festas, inaugurações, agendas do vereador (diferente
+// da Agenda pessoal: aqui é pra planejar/acompanhar eventos maiores)
+// ============================================================
+let eventosCache = [];
+
+async function renderEventos(){
+  const c = document.getElementById('conteudo');
+  c.innerHTML = '<div class="topo-pagina"><div><h2>Controle de <span class="destaque">Eventos</span></h2><div class="barra-assinatura"></div></div></div><p style="color:#9FB3A6;">Carregando...</p>';
+  eventosCache = await listarColecao('eventos');
+  desenharEventos();
+}
+
+function desenharEventos(){
+  const c = document.getElementById('conteudo');
+  const botaoNovo = somenteLeitura() ? '' : '<button class="btn-primario" onclick="window.abrirModalEvt()">+ Novo Evento</button>';
+  c.innerHTML = `
+    <div class="topo-pagina">
+      <div><h2>Controle de <span class="destaque">Eventos</span></h2><div class="barra-assinatura"></div></div>
+      ${botaoNovo}
+    </div>
+    <div class="tabela-box">
+      <table>
+        <thead><tr><th>Data</th><th>Título</th><th>Local</th><th>Status</th>${somenteLeitura()?'':'<th></th>'}</tr></thead>
+        <tbody>
+          ${eventosCache.map(ev=>`
+            <tr>
+              <td>${ev.data||''}</td><td>${ev.titulo||''}</td><td>${ev.local||''}</td>
+              <td>${badgeStatus(ev.status)}</td>
+              ${somenteLeitura() ? '' : `<td><button class="btn-secundario" onclick='window.abrirModalEvt(${JSON.stringify(ev)})'>Editar</button></td>`}
+            </tr>`).join('') || `<tr><td colspan="5" style="text-align:center;color:#5E7368;padding:20px;">Nenhum evento cadastrado ainda.</td></tr>`}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+window.abrirModalEvt = function(registro){
+  registro = registro || {};
+  const fundo = document.createElement('div');
+  fundo.className = 'modal-fundo';
+  fundo.onclick = (ev)=>{ if(ev.target===fundo) fundo.remove(); };
+  fundo.innerHTML = `
+    <div class="modal" onclick="event.stopPropagation()">
+      <h3>${registro.id ? 'Editar' : 'Novo'} Evento</h3>
+      <div class="modal-grid">
+        <div class="campo-2"><label>Título</label><input id="evt_titulo" value="${registro.titulo||''}" placeholder="Ex: Festa junina do bairro X"></div>
+        <div><label>Data</label><input id="evt_data" value="${registro.data||''}" placeholder="dd/mm/aaaa"></div>
+        <div><label>Local</label><input id="evt_local" value="${registro.local||''}"></div>
+        <div><label>Status</label><select id="evt_status">${STATUS_EVENTO.map(s=>`<option ${s===registro.status?'selected':''}>${s}</option>`).join('')}</select></div>
+        <div class="campo-2"><label>Descrição</label><textarea id="evt_desc" rows="3">${registro.descricao||''}</textarea></div>
+      </div>
+      <div class="modal-acoes">
+        <button class="btn-secundario" onclick="this.closest('.modal-fundo').remove()">Cancelar</button>
+        ${somenteLeitura() ? '' : `<button class="btn-primario" onclick="window.salvarEvt('${registro.id||''}')">Salvar</button>`}
+      </div>
+    </div>`;
+  document.body.appendChild(fundo);
+};
+
+window.salvarEvt = async function(id){
+  const dados = {
+    titulo: document.getElementById('evt_titulo').value,
+    data: document.getElementById('evt_data').value,
+    local: document.getElementById('evt_local').value,
+    status: document.getElementById('evt_status').value,
+    descricao: document.getElementById('evt_desc').value
+  };
+  try{
+    await salvarDoc('eventos', id||null, dados);
+    document.querySelector('.modal-fundo').remove();
+    renderEventos();
+  }catch(erro){
+    alert('Não foi possível salvar. ('+erro.message+')');
+  }
+};
+
+// ============================================================
+// CONFIGURAÇÕES (só ADMIN) — cadastra os tipos usados nos formulários
+// de Atendimentos (ex: CESTA BÁSICA, CONSULTA, PATROCÍNIO) e de
+// Equipamentos (ex: CADEIRA DE RODAS, ANDADOR, COLCHÃO). Ninguém além
+// do ADMIN pode mexer aqui — reforçado tanto na tela quanto nas regras
+// do Firestore (souAdmin()).
+// ============================================================
+async function renderConfiguracoes(){
+  if(USUARIO.cargo !== 'ADMIN'){
+    document.getElementById('conteudo').innerHTML = '<div class="topo-pagina"><div><h2>Acesso restrito</h2></div></div><p style="color:#9FB3A6;">Esta área é exclusiva do administrador.</p>';
+    return;
+  }
+  const c = document.getElementById('conteudo');
+  c.innerHTML = '<div class="topo-pagina"><div><h2>Configurações</h2><div class="barra-assinatura"></div></div></div><p style="color:#9FB3A6;">Carregando...</p>';
+  await carregarTiposConfiguraveis();
+  desenharConfiguracoes();
+}
+
+function desenharConfiguracoes(){
+  const c = document.getElementById('conteudo');
+  c.innerHTML = `
+    <div class="topo-pagina"><div><h2>Configurações</h2><div class="barra-assinatura"></div></div></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+
+      <div class="agenda-box" style="height:auto;">
+        <h3 style="margin:0 0 4px;font-size:15px;color:#fff;">Tipos de Atendimento</h3>
+        <p style="font-size:11.5px;color:var(--texto-suave);margin:0 0 14px;">Aparecem no formulário de novo atendimento.</p>
+        <div style="display:flex;gap:8px;margin-bottom:14px;">
+          <input id="novoTipoAtendimento" placeholder="Ex: CESTA BASICA" style="flex:1;padding:10px 12px;border:1.5px solid var(--borda);border-radius:var(--raio-s);background:var(--preto-suave);color:var(--texto);font-family:inherit;">
+          <button class="btn-primario" onclick="window.adicionarTipoAtendimento()">+ Adicionar</button>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;max-height:340px;overflow-y:auto;">
+          ${tiposAtendimentoCache.map(t=>`
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--superficie-2);border-radius:8px;">
+              <span style="font-size:12.5px;">${t.nome}</span>
+              <button class="btn-secundario" style="padding:5px 10px;font-size:11px;" onclick="window.excluirTipoAtendimento('${t.id}')">Excluir</button>
+            </div>`).join('') || '<p style="color:#5E7368;font-size:12px;">Nenhum tipo cadastrado ainda.</p>'}
+        </div>
+      </div>
+
+      <div class="agenda-box" style="height:auto;">
+        <h3 style="margin:0 0 4px;font-size:15px;color:#fff;">Tipos de Equipamento</h3>
+        <p style="font-size:11.5px;color:var(--texto-suave);margin:0 0 14px;">Aparecem no formulário de novo empréstimo.</p>
+        <div style="display:flex;gap:8px;margin-bottom:14px;">
+          <input id="novoTipoEquipamento" placeholder="Ex: CADEIRA DE RODAS" style="flex:1;padding:10px 12px;border:1.5px solid var(--borda);border-radius:var(--raio-s);background:var(--preto-suave);color:var(--texto);font-family:inherit;">
+          <button class="btn-primario" onclick="window.adicionarTipoEquipamento()">+ Adicionar</button>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;max-height:340px;overflow-y:auto;">
+          ${tiposEquipamentoCache.map(t=>`
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--superficie-2);border-radius:8px;">
+              <span style="font-size:12.5px;">${t.nome}</span>
+              <button class="btn-secundario" style="padding:5px 10px;font-size:11px;" onclick="window.excluirTipoEquipamento('${t.id}')">Excluir</button>
+            </div>`).join('') || '<p style="color:#5E7368;font-size:12px;">Nenhum tipo cadastrado ainda.</p>'}
+        </div>
+      </div>
+
+    </div>
+  `;
+}
+
+window.adicionarTipoAtendimento = async function(){
+  const campo = document.getElementById('novoTipoAtendimento');
+  const nome = campo.value.trim().toUpperCase();
+  if(!nome) return;
+  try{
+    await addDoc(collection(db,'tiposAtendimento'), { nome, criadoEm: serverTimestamp() });
+    campo.value = '';
+    await carregarTiposConfiguraveis();
+    desenharConfiguracoes();
+  }catch(erro){
+    alert('Não foi possível adicionar. Só ADMIN pode cadastrar tipos. ('+erro.message+')');
+  }
+};
+
+window.excluirTipoAtendimento = async function(id){
+  if(!confirm('Excluir este tipo? Atendimentos que já usam esse tipo não serão apagados.')) return;
+  try{
+    await deleteDoc(doc(db,'tiposAtendimento',id));
+    await carregarTiposConfiguraveis();
+    desenharConfiguracoes();
+  }catch(erro){
+    alert('Não foi possível excluir. ('+erro.message+')');
+  }
+};
+
+window.adicionarTipoEquipamento = async function(){
+  const campo = document.getElementById('novoTipoEquipamento');
+  const nome = campo.value.trim().toUpperCase();
+  if(!nome) return;
+  try{
+    await addDoc(collection(db,'tiposEquipamento'), { nome, criadoEm: serverTimestamp() });
+    campo.value = '';
+    await carregarTiposConfiguraveis();
+    desenharConfiguracoes();
+  }catch(erro){
+    alert('Não foi possível adicionar. Só ADMIN pode cadastrar tipos. ('+erro.message+')');
+  }
+};
+
+window.excluirTipoEquipamento = async function(id){
+  if(!confirm('Excluir este tipo? Empréstimos que já usam esse tipo não serão apagados.')) return;
+  try{
+    await deleteDoc(doc(db,'tiposEquipamento',id));
+    await carregarTiposConfiguraveis();
+    desenharConfiguracoes();
+  }catch(erro){
+    alert('Não foi possível excluir. ('+erro.message+')');
+  }
+};
+
+// ============================================================
 // USUÁRIOS (só ADMIN) — bloquear/desbloquear, trocar cargo
 // IMPORTANTE: criar um LOGIN novo (e-mail/senha) tem que ser feito no
 // Firebase Console > Authentication > Add user, porque criar pelo app
@@ -1019,6 +1236,13 @@ window.salvarUsuario = async function(id){
 
 window.fazerLogin = fazerLogin;
 window.fazerLogout = fazerLogout;
+
+// Registra o service worker (necessário pro "Adicionar à tela inicial" aparecer)
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+  });
+}
 </script>
 </body>
 </html>
