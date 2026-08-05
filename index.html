@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Gabinete Digital — Tatiquinho</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  /* ============================================================
+     TOKENS DE MARCA — TATIQUINHO
+     Verde-escuro + preto + verde-limão (degradê), extraídos do logo.
+     Headline: Barlow Condensed (poster de campanha). Corpo: Inter.
+     Assinatura visual: barra em degradê verde→limão sob os títulos,
+     repetindo o traço que já existe na marca.
+     ============================================================ */
+  :root{
+    --preto:#060907;
+    --preto-suave:#0B120E;
+    --verde:#0E3B2A;
+    --verde-escuro:#082A1D;
+    --verde-vivo:#16A34A;
+    --limao:#A8D948;
+    --limao-2:#6FBF3E;
+    --superficie:#0E1712;
+    --superficie-2:#121C16;
+    --borda:#1E2C23;
+    --texto:#F5F7F4;
+    --texto-suave:#9FB3A6;
+    --texto-fraco:#5E7368;
+    --alerta:#E5484D;
+    --aviso:#E8AE00;
+    --raio-s:10px;
+    --raio-m:14px;
+    --raio-l:20px;
+    --degrade-assinatura: linear-gradient(90deg, var(--verde) 0%, var(--verde-vivo) 45%, var(--limao) 100%);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:var(--preto);color:var(--texto);font-family:'Inter',sans-serif;overflow-x:hidden;}
+  h1,h2,h3,.font-display{font-family:'Barlow Condensed',sans-serif;letter-spacing:.3px;}
+  .mono{font-family:'JetBrains Mono',monospace;}
+  .hidden{display:none !important;}
+  img{max-width:100%;}
+  ::-webkit-scrollbar{width:8px;height:8px;}
+  ::-webkit-scrollbar-thumb{background:#233529;border-radius:8px;}
+  @keyframes entra{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+
+  .barra-assinatura{height:4px;border-radius:4px;background:var(--degrade-assinatura);}
+
+  /* ---------- LOGIN ---------- */
+  #telaLogin{height:100vh;display:flex;align-items:center;justify-content:center;background:
+    radial-gradient(circle at 50% 0%, rgba(168,217,72,.10), transparent 45%), var(--preto);}
+  .card-login{background:var(--superficie);border:1px solid var(--borda);padding:44px 38px;border-radius:var(--raio-l);width:380px;max-width:92vw;box-shadow:0 40px 90px rgba(0,0,0,.5);animation:entra .35s ease both;}
+  .card-login .marca{text-align:center;margin-bottom:22px;}
+  .card-login .marca .arroba{color:var(--texto-suave);font-size:12px;letter-spacing:1px;margin-bottom:6px;}
+  .card-login .marca h1{font-size:42px;font-weight:900;margin:0;line-height:.9;color:#fff;text-transform:uppercase;}
+  .card-login .marca .slogan{background:var(--verde-escuro);color:var(--limao);font-weight:700;font-size:11.5px;letter-spacing:1px;text-transform:uppercase;padding:6px 10px;border-radius:6px;display:inline-block;margin-top:10px;}
+  .card-login .barra-assinatura{margin:16px 0 22px;}
+  .card-login input{width:100%;padding:13px 14px;margin-bottom:12px;border:1.5px solid var(--borda);border-radius:var(--raio-s);font-size:14px;font-family:inherit;background:var(--preto-suave);color:var(--texto);}
+  .card-login input:focus{outline:none;border-color:var(--limao);}
+  .card-login button{width:100%;padding:14px;background:var(--degrade-assinatura);color:#062012;border:none;border-radius:var(--raio-s);font-weight:800;font-size:14px;cursor:pointer;letter-spacing:.3px;text-transform:uppercase;}
+  .card-login button:disabled{opacity:.6;cursor:default;}
+  #erroLogin{color:#FF8E92;font-size:12px;margin-top:10px;min-height:16px;text-align:center;font-weight:600;}
+
+  /* ---------- SHELL ---------- */
+  #app{display:flex;flex-direction:column;height:100vh;width:100%;}
+  header.topo-app{background:var(--superficie);border-bottom:1px solid var(--borda);flex-shrink:0;}
+  .topo-linha1{display:flex;align-items:center;gap:18px;padding:14px 28px;}
+  .logo-topo h1{font-size:22px;font-weight:900;margin:0;color:#fff;text-transform:uppercase;line-height:.9;}
+  .logo-topo .arroba{font-size:9.5px;color:var(--texto-suave);letter-spacing:1px;}
+  .saudacao-bloco{margin-left:14px;}
+  .saudacao-bloco h2{margin:0;font-size:19px;font-weight:700;color:#fff;}
+  .saudacao-bloco span{font-size:11px;color:var(--texto-suave);}
+  .topo-direita{display:flex;align-items:center;gap:14px;margin-left:auto;}
+  .avatar-topo{width:36px;height:36px;border-radius:50%;background:var(--verde);color:var(--limao);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;border:1px solid var(--borda);}
+  .perfil-texto{display:flex;flex-direction:column;line-height:1.25;}
+  .perfil-texto b{font-size:12.5px;color:#fff;}
+  .perfil-texto span{font-size:10.5px;color:var(--texto-suave);}
+  .btn-sair{background:none;border:1px solid var(--borda);color:var(--texto-suave);padding:8px 14px;border-radius:var(--raio-s);font-size:12px;font-weight:700;cursor:pointer;}
+  .btn-sair:hover{background:var(--alerta);color:#fff;border-color:var(--alerta);}
+  nav.menu-nav{display:flex;gap:2px;padding:0 24px;overflow-x:auto;border-top:1px solid var(--borda);}
+  nav.menu-nav button{background:none;border:none;color:var(--texto-suave);font-family:inherit;font-weight:700;font-size:13px;padding:12px 15px;cursor:pointer;white-space:nowrap;position:relative;}
+  nav.menu-nav button:hover{color:#fff;}
+  nav.menu-nav button.ativo{color:var(--limao);}
+  nav.menu-nav button.ativo::after{content:'';position:absolute;left:12px;right:12px;bottom:0;height:3px;border-radius:3px;background:var(--degrade-assinatura);}
+
+  main{flex:1;overflow-y:auto;padding:26px 28px 40px;}
+
+  .topo-pagina{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:18px;gap:14px;flex-wrap:wrap;}
+  .topo-pagina h2{margin:0 0 8px;font-size:24px;font-weight:800;color:#fff;}
+  .topo-pagina .destaque{color:var(--limao);}
+  .topo-pagina .barra-assinatura{width:64px;}
+  .btn-primario{background:var(--degrade-assinatura);color:#062012;border:none;padding:11px 18px;border-radius:var(--raio-s);font-weight:800;font-family:inherit;cursor:pointer;font-size:13px;text-transform:uppercase;letter-spacing:.3px;}
+  .btn-primario:hover{filter:brightness(1.08);}
+  .btn-secundario{background:var(--superficie-2);border:1px solid var(--borda);color:var(--texto);padding:10px 14px;border-radius:var(--raio-s);cursor:pointer;font-size:12.5px;font-family:inherit;font-weight:600;}
+  .btn-secundario:hover{border-color:var(--limao);color:var(--limao);}
+
+  /* ---------- KPIs ---------- */
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:24px;}
+  .kpi{background:var(--superficie);border:1px solid var(--borda);border-left:4px solid var(--limao);border-radius:var(--raio-m);padding:18px 20px;}
+  .kpi .num{font-size:28px;font-weight:800;color:#fff;line-height:1;}
+  .kpi .rot{font-size:10.5px;color:var(--texto-suave);text-transform:uppercase;letter-spacing:.5px;margin-top:8px;font-weight:700;}
+
+  /* ---------- tabela ---------- */
+  .barra-acoes{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
+  .barra-acoes input,.barra-acoes select{padding:10px 13px;border:1.5px solid var(--borda);border-radius:var(--raio-s);font-size:13px;font-family:inherit;background:var(--superficie);color:var(--texto);}
+  .barra-acoes input:focus,.barra-acoes select:focus{outline:none;border-color:var(--limao);}
+  .tabela-box{background:var(--superficie);border:1px solid var(--borda);border-radius:var(--raio-m);overflow:auto;max-height:60vh;}
+  table{width:100%;border-collapse:collapse;font-size:12.5px;}
+  th{position:sticky;top:0;background:var(--verde-escuro);color:var(--limao);text-align:left;padding:11px 14px;font-size:9.5px;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;font-weight:800;z-index:2;}
+  td{padding:11px 14px;border-bottom:1px solid var(--borda);white-space:nowrap;max-width:220px;overflow:hidden;text-overflow:ellipsis;color:var(--texto);}
+  tbody tr:hover td{background:var(--superficie-2);}
+  .link-wa{color:var(--limao);text-decoration:none;font-weight:700;display:inline-flex;align-items:center;gap:5px;}
+  .link-wa:hover{text-decoration:underline;}
+
+  .badge{padding:4px 10px;border-radius:20px;font-size:10px;font-weight:800;letter-spacing:.2px;display:inline-block;}
+  .badge.CONCLUIDO,.badge.SIM,.badge.ENTREGUE{background:rgba(22,163,74,.18);color:#3FD17D;border:1px solid rgba(63,209,125,.3);}
+  .badge.EM_ANALISE{background:rgba(232,174,0,.18);color:#F2C43D;border:1px solid rgba(242,196,61,.3);}
+  .badge.CANCELADO,.badge.NAO{background:rgba(229,72,77,.18);color:#FF8E92;border:1px solid rgba(255,142,146,.3);}
+  .badge.USANDO{background:rgba(232,174,0,.18);color:#F2C43D;border:1px solid rgba(242,196,61,.3);}
+
+  /* ---------- modal ---------- */
+  .modal-fundo{position:fixed;inset:0;background:rgba(2,6,4,.66);display:flex;align-items:flex-start;justify-content:center;padding:40px 16px;overflow-y:auto;z-index:80;}
+  .modal{background:var(--superficie);border:1px solid var(--borda);border-radius:var(--raio-l);padding:28px;width:640px;max-width:100%;box-shadow:0 40px 90px rgba(0,0,0,.5);animation:entra .2s ease both;}
+  .modal h3{margin:0 0 16px;font-size:19px;font-weight:800;color:#fff;}
+  .modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px 14px;}
+  .campo-2{grid-column:1/-1;}
+  .modal label{font-size:10px;color:var(--texto-suave);display:block;margin:0 0 5px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;}
+  .modal input,.modal select,.modal textarea{width:100%;padding:10px 12px;border:1.5px solid var(--borda);border-radius:var(--raio-s);font-size:13px;font-family:inherit;background:var(--preto-suave);color:var(--texto);}
+  .modal input:focus,.modal select:focus,.modal textarea:focus{outline:none;border-color:var(--limao);}
+  .modal-acoes{display:flex;justify-content:flex-end;gap:10px;margin-top:22px;}
+  .aviso-perfil{background:rgba(232,174,0,.12);border:1px solid rgba(232,174,0,.35);color:#F2C43D;padding:11px 15px;border-radius:var(--raio-s);font-size:12px;margin-bottom:16px;}
+  .lista-anexos-item{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--borda);font-size:12px;}
+  .lista-anexos-item span{display:flex;gap:8px;}
+
+  @media(max-width:760px){
+    .topo-linha1{padding:12px 16px;flex-wrap:wrap;}
+    .saudacao-bloco{display:none;}
+    main{padding:16px;}
+    .modal-grid{grid-template-columns:1fr;}
+    .kpis{grid-template-columns:1fr 1fr;}
+  }
+</style>
+</head>
+<body>
+
+<div id="telaLogin">
+  <div class="card-login">
+    <div class="marca">
+      <div class="arroba">@tatiquinho.caldas</div>
+      <h1>TATIQUINHO</h1>
+      <div class="slogan">O Diferenciado do Povo</div>
+    </div>
+    <div class="barra-assinatura"></div>
+    <input id="inputUsuario" placeholder="Usuário (e-mail)" autocomplete="username">
+    <input id="inputSenha" type="password" placeholder="Senha" autocomplete="current-password">
+    <button id="btnEntrar" onclick="fazerLogin()">Entrar</button>
+    <div id="erroLogin"></div>
+  </div>
+</div>
+
+<div id="app" class="hidden">
+  <header class="topo-app">
+    <div class="topo-linha1">
+      <div class="logo-topo">
+        <div class="arroba">@tatiquinho.caldas</div>
+        <h1>TATIQUINHO</h1>
+      </div>
+      <div class="saudacao-bloco">
+        <h2 id="saudacaoTopo">Olá!</h2>
+        <span>Gabinete Digital</span>
+      </div>
+      <div class="topo-direita">
+        <div class="perfil-texto">
+          <b id="nomeTopo">-</b>
+          <span id="cargoTopo">-</span>
+        </div>
+        <div class="avatar-topo" id="avatarTopo">-</div>
+        <button class="btn-sair" onclick="fazerLogout()">Sair</button>
+      </div>
+    </div>
+    <nav id="menuNav" class="menu-nav"></nav>
+  </header>
+  <main id="conteudo"></main>
+</div>
+
+<!-- =========================================================
+     PREENCHA AQUI a config do seu projeto Firebase
+     (Firebase Console > Configurações do projeto > Seus apps > SDK)
+     ========================================================= -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+import {
+  getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+import {
+  getFirestore, collection, doc, getDoc, getDocs, setDoc, addDoc, updateDoc, deleteDoc,
+  query, orderBy, onSnapshot, serverTimestamp, where
+} from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+import {
+  getStorage, ref, uploadBytes, getDownloadURL, deleteObject
+} from "https://www.gstatic.com/firebasejs/10.13.0/firebase-storage.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyA5xo83LIBoD8Hqda46JDFNQjbOVL4bEEI",
+  authDomain: "tatiquinho-gabinete-digital.firebaseapp.com",
+  projectId: "tatiquinho-gabinete-digital",
+  storageBucket: "tatiquinho-gabinete-digital.firebasestorage.app",
+  messagingSenderId: "1072380766598",
+  appId: "1:1072380766598:web:146b6527dffc018c3f6407"
+};
+
+const fbApp = initializeApp(firebaseConfig);
+const auth = getAuth(fbApp);
+const db = getFirestore(fbApp);
+const storage = getStorage(fbApp);
+
+// ---------------- ESTADO ----------------
+let USUARIO = null; // { uid, nome, cargo, ativo, email }
+let paginaAtual = 'dashboard';
+let pararVigiaPerfil = null; // função pra desligar o listener ao sair
+
+const TIPOS_ATENDIMENTO = ['CESTA BASICA','CONSULTA MED','DOACOES','EMENDA IMPOSITIVA','EMPREGO','EQUIPAMENTOS','ESCOLA','EXAME MED','OUTROS','PATROCINIO','REMEDIO','TRANSPORTE','CIRURGIA','TROCA DE LAMPADAS'];
+const STATUS_ATENDIMENTO = ['EM ANALISE','CONCLUIDO','CANCELADO'];
+const TIPOS_DOCUMENTO = ['RG','CPF','CONSULTA MEDICA','RECEITA','LAUDO','COMPROVANTE','OUTRO'];
+
+function normalizarTexto(txt){
+  return String(txt||'').trim().toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+}
+function somenteLeitura(){ return normalizarTexto(USUARIO && USUARIO.cargo) === 'VEREADOR'; }
+function iniciaisNome(nome){
+  if(!nome) return '?';
+  const p = nome.trim().split(' ');
+  return (p[0][0] + (p[1]?p[1][0]:'')).toUpperCase();
+}
+function badgeStatus(status){
+  if(!status || String(status).trim()==='') return '<span style="color:#5E7368;">— sem status —</span>';
+  const classe = normalizarTexto(status).replace(/\s/g,'_');
+  return '<span class="badge '+classe+'">'+status+'</span>';
+}
+// telefone clicável -> abre WhatsApp direto (wa.me). Não é disparo em massa,
+// é 1 clique = 1 conversa aberta manualmente, sem custo e sem risco de banimento.
+function linkWhatsapp(telefone){
+  if(!telefone) return '-';
+  const numeros = String(telefone).replace(/\D/g,'');
+  if(!numeros) return telefone;
+  const comDDI = numeros.length <= 11 ? '55'+numeros : numeros;
+  return '<a class="link-wa" target="_blank" href="https://wa.me/'+comDDI+'">💬 '+telefone+'</a>';
+}
+
+// ---------------- LOGIN ----------------
+document.getElementById('inputUsuario').addEventListener('keydown', e=>{ if(e.key==='Enter') fazerLogin(); });
+document.getElementById('inputSenha').addEventListener('keydown', e=>{ if(e.key==='Enter') fazerLogin(); });
+
+async function fazerLogin(){
+  const email = document.getElementById('inputUsuario').value.trim();
+  const senha = document.getElementById('inputSenha').value;
+  const erroEl = document.getElementById('erroLogin');
+  const btn = document.getElementById('btnEntrar');
+  erroEl.innerText = '';
+  if(!email || !senha){ erroEl.innerText = 'Preencha usuário e senha.'; return; }
+  btn.disabled = true; btn.innerText = 'Entrando...';
+  try{
+    await signInWithEmailAndPassword(auth, email, senha);
+    // onAuthStateChanged cuida do resto
+  }catch(erro){
+    const mapa = {
+      'auth/invalid-credential':'Usuário ou senha incorretos.',
+      'auth/user-not-found':'Usuário não encontrado.',
+      'auth/wrong-password':'Senha incorreta.',
+      'auth/too-many-requests':'Muitas tentativas. Aguarde um pouco.',
+      'auth/invalid-email':'E-mail inválido.'
+    };
+    erroEl.innerText = mapa[erro.code] || 'Erro ao entrar. Tente novamente.';
+  }finally{
+    btn.disabled = false; btn.innerText = 'Entrar';
+  }
+}
+
+async function fazerLogout(){
+  await signOut(auth);
+}
+
+onAuthStateChanged(auth, async (user) => {
+  if(!user){
+    USUARIO = null;
+    document.getElementById('app').classList.add('hidden');
+    document.getElementById('telaLogin').classList.remove('hidden');
+    return;
+  }
+  const perfilSnap = await getDoc(doc(db,'usuarios',user.uid));
+  if(!perfilSnap.exists() || perfilSnap.data().ativo === false){
+    document.getElementById('erroLogin').innerText = 'Seu usuário não tem perfil ativo. Fale com o administrador.';
+    await signOut(auth);
+    return;
+  }
+  const p = perfilSnap.data();
+  USUARIO = { uid:user.uid, email:user.email, nome:p.nome||user.email, cargo:normalizarTexto(p.cargo), ativo:true, foto:p.foto||null };
+  iniciarApp();
+
+  // VIGIA EM TEMPO REAL: se o ADMIN desativar esse usuário enquanto ele
+  // está com o app aberto, a sessão cai na hora — não espera próxima ação.
+  if(pararVigiaPerfil) pararVigiaPerfil();
+  pararVigiaPerfil = onSnapshot(doc(db,'usuarios',user.uid), (snap)=>{
+    if(!snap.exists() || snap.data().ativo === false){
+      alert('Seu acesso foi bloqueado pelo administrador.');
+      signOut(auth);
+    }
+  });
+});
+
+function iniciarApp(){
+  document.getElementById('telaLogin').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+  document.getElementById('nomeTopo').innerText = USUARIO.nome;
+  document.getElementById('cargoTopo').innerText = rotuloCargo(USUARIO.cargo);
+  const avatar = document.getElementById('avatarTopo');
+  avatar.innerHTML = USUARIO.foto ? '<img src="'+USUARIO.foto+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">' : iniciaisNome(USUARIO.nome);
+
+  const hora = new Date().getHours();
+  const saud = hora<12?'Bom dia':hora<18?'Boa tarde':'Boa noite';
+  document.getElementById('saudacaoTopo').innerText = saud + ', ' + USUARIO.nome.split(' ')[0] + '!';
+
+  montarMenu();
+  irPara('dashboard');
+}
+
+function rotuloCargo(c){
+  const m = {ADMIN:'ADMINISTRADOR',VEREADOR:'VEREADOR',ASSESSOR:'ASSESSOR',ASSESSORA:'ASSESSORA'};
+  return m[c] || c || '-';
+}
+
+function montarMenu(){
+  const itens = [
+    {id:'dashboard',label:'Dashboard'},
+    {id:'atendimentos',label:'Atendimentos'},
+    {id:'transportes',label:'Transportes'},
+    {id:'equipamentos',label:'Equipamentos'},
+    {id:'agenda',label:'Agenda'}
+  ];
+  if(USUARIO.cargo === 'ADMIN') itens.push({id:'usuarios',label:'Usuários'});
+  const nav = document.getElementById('menuNav');
+  nav.innerHTML = '';
+  itens.forEach(it=>{
+    const btn = document.createElement('button');
+    btn.innerText = it.label;
+    btn.id = 'menu_'+it.id;
+    btn.onclick = ()=>irPara(it.id);
+    nav.appendChild(btn);
+  });
+}
+function marcarMenuAtivo(id){
+  document.querySelectorAll('#menuNav button').forEach(b=>b.classList.remove('ativo'));
+  const el = document.getElementById('menu_'+id);
+  if(el) el.classList.add('ativo');
+}
+
+function irPara(pagina){
+  paginaAtual = pagina;
+  marcarMenuAtivo(pagina);
+  const funcoes = { dashboard:renderDashboard, atendimentos:renderAtendimentos, transportes:renderTransportes, equipamentos:renderEquipamentos, agenda:renderAgenda, usuarios:renderUsuarios };
+  funcoes[pagina]();
+}
+
+// ---------------- HELPERS FIRESTORE ----------------
+async function listarColecao(nome){
+  const snap = await getDocs(query(collection(db,nome), orderBy('criadoEm','desc')));
+  return snap.docs.map(d=>({ id:d.id, ...d.data() }));
+}
+async function salvarDoc(colecaoNome, id, dados){
+  dados.ultimaEdicaoPor = USUARIO.nome;
+  dados.ultimaEdicaoData = new Date().toLocaleString('pt-BR');
+  if(id){
+    await updateDoc(doc(db,colecaoNome,id), dados);
+    return id;
+  } else {
+    dados.criadoPor = USUARIO.nome;
+    dados.criadoEm = serverTimestamp();
+    const ref = await addDoc(collection(db,colecaoNome), dados);
+    return ref.id;
+  }
+}
+
+// ============================================================
+// DASHBOARD
+// ============================================================
+async function renderDashboard(){
+  const c = document.getElementById('conteudo');
+  c.innerHTML = '<div class="topo-pagina"><div><h2>Visão <span class="destaque">Geral</span></h2><div class="barra-assinatura"></div></div></div><p style="color:#9FB3A6;">Carregando...</p>';
+
+  const [atend, transp, equip] = await Promise.all([
+    listarColecao('atendimentos'), listarColecao('transportes'), listarColecao('equipamentos')
+  ]);
+
+  const emAnalise = atend.filter(a=>normalizarTexto(a.status)==='EM ANALISE').length;
+  const concluidos = atend.filter(a=>normalizarTexto(a.status)==='CONCLUIDO').length;
+  const transpConfirmados = transp.filter(t=>normalizarTexto(t.confirmado)==='SIM').length;
+  const equipEmUso = equip.filter(e=>normalizarTexto(e.devolucao)==='USANDO').length;
+
+  c.innerHTML = `
+    <div class="topo-pagina"><div><h2>Visão <span class="destaque">Geral</span></h2><div class="barra-assinatura"></div></div></div>
+    <div class="kpis">
+      <div class="kpi"><div class="num">${atend.length}</div><div class="rot">Atendimentos Totais</div></div>
+      <div class="kpi"><div class="num">${emAnalise}</div><div class="rot">Em Análise</div></div>
+      <div class="kpi"><div class="num">${concluidos}</div><div class="rot">Concluídos</div></div>
+      <div class="kpi"><div class="num">${transp.length}</div><div class="rot">Transportes</div></div>
+      <div class="kpi"><div class="num">${transpConfirmados}</div><div class="rot">Confirmados</div></div>
+      <div class="kpi"><div class="num">${equipEmUso}</div><div class="rot">Equipamentos em Uso</div></div>
+    </div>
+    <div class="tabela-box">
+      <table>
+        <thead><tr><th>Data</th><th>Nome</th><th>Tipo</th><th>Status</th></tr></thead>
+        <tbody>
+          ${atend.slice(0,10).map(a=>`<tr><td>${a.data||''}</td><td>${a.nome||''}</td><td>${a.tipoAtendimento||''}</td><td>${badgeStatus(a.status)}</td></tr>`).join('') || '<tr><td colspan="4" style="text-align:center;color:#5E7368;padding:20px;">Nenhum atendimento ainda.</td></tr>'}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+// ============================================================
+// ATENDIMENTOS
+// ============================================================
+let atendimentosCache = [];
+
+async function renderAtendimentos(){
+  const c = document.getElementById('conteudo');
+  c.innerHTML = '<div class="topo-pagina"><div><h2>Controle de <span class="destaque">Atendimentos</span></h2><div class="barra-assinatura"></div></div></div><p style="color:#9FB3A6;">Carregando...</p>';
+  atendimentosCache = await listarColecao('atendimentos');
+  desenharAtendimentos();
+}
+
+function desenharAtendimentos(){
+  const c = document.getElementById('conteudo');
+  const botaoNovo = somenteLeitura() ? '' : '<button class="btn-primario" onclick="window.abrirModalAtendimento()">+ Novo Atendimento</button>';
+  const aviso = somenteLeitura() ? '<div class="aviso-perfil">Seu perfil (VEREADOR) tem acesso somente para visualização.</div>' : '';
+
+  c.innerHTML = `
+    <div class="topo-pagina">
+      <div><h2>Controle de <span class="destaque">Atendimentos</span></h2><div class="barra-assinatura"></div></div>
+      ${botaoNovo}
+    </div>
+    ${aviso}
+    <div class="barra-acoes">
+      <input id="fTexto" placeholder="Buscar nome ou bairro..." oninput="window.filtrarAtendimentos()">
+      <select id="fStatus" onchange="window.filtrarAtendimentos()">
+        <option value="">Todos os status</option>
+        ${STATUS_ATENDIMENTO.map(s=>`<option>${s}</option>`).join('')}
+      </select>
+      <button class="btn-secundario" onclick="window.irPara('atendimentos')">↻ Atualizar</button>
+    </div>
+    <div class="tabela-box">
+      <table>
+        <thead><tr><th>Data</th><th>Nome</th><th>Telefone</th><th>Bairro</th><th>Tipo</th><th>Status</th><th>Responsável</th><th>Anexos</th>${somenteLeitura()?'':'<th></th>'}</tr></thead>
+        <tbody id="tbodyAtend"></tbody>
+      </table>
+    </div>
+  `;
+  filtrarAtendimentos();
+}
+
+function filtrarAtendimentos(){
+  const texto = (document.getElementById('fTexto').value||'').toLowerCase();
+  const status = document.getElementById('fStatus').value;
+  let linhas = atendimentosCache;
+  if(texto) linhas = linhas.filter(a=>((a.nome||'')+' '+(a.bairro||'')).toLowerCase().includes(texto));
+  if(status) linhas = linhas.filter(a=>normalizarTexto(a.status)===normalizarTexto(status));
+
+  document.getElementById('tbodyAtend').innerHTML = linhas.map(a=>`
+    <tr>
+      <td>${a.data||''}</td>
+      <td>${a.nome||''}</td>
+      <td>${linkWhatsapp(a.telefone)}</td>
+      <td>${a.bairro||''}</td>
+      <td>${a.tipoAtendimento||''}</td>
+      <td>${badgeStatus(a.status)}</td>
+      <td>${a.responsavel||''}</td>
+      <td>${a.qtdAnexos ? '📎 '+a.qtdAnexos : '—'}</td>
+      ${somenteLeitura() ? '' : `<td><button class="btn-secundario" onclick='window.abrirModalAtendimento(${JSON.stringify(a)})'>Editar</button></td>`}
+    </tr>
+  `).join('') || `<tr><td colspan="9" style="text-align:center;color:#5E7368;padding:20px;">Nenhum atendimento encontrado.</td></tr>`;
+}
+
+window.filtrarAtendimentos = filtrarAtendimentos;
+window.irPara = irPara;
+
+window.abrirModalAtendimento = function(registro){
+  registro = registro || {};
+  const fundo = document.createElement('div');
+  fundo.className = 'modal-fundo';
+  fundo.onclick = (ev)=>{ if(ev.target===fundo) fundo.remove(); };
+  fundo.innerHTML = `
+    <div class="modal" onclick="event.stopPropagation()">
+      <h3>${registro.id ? 'Editar' : 'Novo'} Atendimento</h3>
+      <div class="modal-grid">
+        <div><label>Nome</label><input id="m_nome" value="${registro.nome||''}"></div>
+        <div><label>Telefone</label><input id="m_telefone" value="${registro.telefone||''}" placeholder="64 99999-0000"></div>
+        <div class="campo-2"><label>Endereço</label><input id="m_endereco" value="${registro.endereco||''}"></div>
+        <div><label>Bairro</label><input id="m_bairro" value="${registro.bairro||''}"></div>
+        <div><label>Tipo</label><select id="m_tipo">${TIPOS_ATENDIMENTO.map(t=>`<option ${t===registro.tipoAtendimento?'selected':''}>${t}</option>`).join('')}</select></div>
+        <div><label>Status</label><select id="m_status">${STATUS_ATENDIMENTO.map(s=>`<option ${s===registro.status?'selected':''}>${s}</option>`).join('')}</select></div>
+        <div><label>Responsável</label><input id="m_responsavel" value="${registro.responsavel||''}"></div>
+        <div class="campo-2"><label>Observações</label><textarea id="m_obs" rows="3">${registro.observacoes||''}</textarea></div>
+      </div>
+      <div class="modal-acoes">
+        <button class="btn-secundario" onclick="this.closest('.modal-fundo').remove()">Cancelar</button>
+        ${somenteLeitura() ? '' : `<button class="btn-primario" onclick="window.salvarAtendimento('${registro.id||''}')">Salvar</button>`}
+      </div>
+    </div>`;
+  document.body.appendChild(fundo);
+};
+
+window.salvarAtendimento = async function(id){
+  const dados = {
+    nome: document.getElementById('m_nome').value,
+    telefone: document.getElementById('m_telefone').value,
+    endereco: document.getElementById('m_endereco').value,
+    bairro: document.getElementById('m_bairro').value,
+    tipoAtendimento: document.getElementById('m_tipo').value,
+    status: document.getElementById('m_status').value,
+    responsavel: document.getElementById('m_responsavel').value,
+    observacoes: document.getElementById('m_obs').value,
+    data: new Date().toLocaleDateString('pt-BR')
+  };
+  try{
+    await salvarDoc('atendimentos', id||null, dados);
+    document.querySelector('.modal-fundo').remove();
+    renderAtendimentos();
+  }catch(erro){
+    alert('Não foi possível salvar. Verifique sua conexão. ('+erro.message+')');
+  }
+};
+
+// ============================================================
+// TRANSPORTES
+// ============================================================
+let transportesCache = [];
+
+async function renderTransportes(){
+  const c = document.getElementById('conteudo');
+  c.innerHTML = '<div class="topo-pagina"><div><h2>Solicitação de <span class="destaque">Transportes</span></h2><div class="barra-assinatura"></div></div></div><p style="color:#9FB3A6;">Carregando...</p>';
+  transportesCache = await listarColecao('transportes');
+  desenharTransportes();
+}
+
+function desenharTransportes(){
+  const c = document.getElementById('conteudo');
+  const botaoNovo = somenteLeitura() ? '' : '<button class="btn-primario" onclick="window.abrirModalTransporte()">+ Nova Solicitação</button>';
+  c.innerHTML = `
+    <div class="topo-pagina">
+      <div><h2>Solicitação de <span class="destaque">Transportes</span></h2><div class="barra-assinatura"></div></div>
+      ${botaoNovo}
+    </div>
+    <div class="tabela-box">
+      <table>
+        <thead><tr><th>Nome</th><th>Data</th><th>Horário</th><th>Hospital</th><th>Contato</th><th>Confirmado</th>${somenteLeitura()?'':'<th></th>'}</tr></thead>
+        <tbody>
+          ${transportesCache.map(t=>`
+            <tr>
+              <td>${t.nome||''}</td><td>${t.data||''}</td><td>${t.horario||''}</td>
+              <td>${t.hospital||''}</td><td>${linkWhatsapp(t.contato)}</td>
+              <td>${badgeStatus(t.confirmado)}</td>
+              ${somenteLeitura() ? '' : `<td><button class="btn-secundario" onclick='window.abrirModalTransporte(${JSON.stringify(t)})'>Editar</button></td>`}
+            </tr>`).join('') || `<tr><td colspan="7" style="text-align:center;color:#5E7368;padding:20px;">Nenhuma solicitação ainda.</td></tr>`}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+window.abrirModalTransporte = function(registro){
+  registro = registro || {};
+  const fundo = document.createElement('div');
+  fundo.className = 'modal-fundo';
+  fundo.onclick = (ev)=>{ if(ev.target===fundo) fundo.remove(); };
+  fundo.innerHTML = `
+    <div class="modal" onclick="event.stopPropagation()">
+      <h3>${registro.id ? 'Editar' : 'Nova'} Solicitação de Transporte</h3>
+      <div class="modal-grid">
+        <div><label>Nome</label><input id="t_nome" value="${registro.nome||''}"></div>
+        <div><label>Data</label><input id="t_data" value="${registro.data||''}" placeholder="dd/mm/aaaa"></div>
+        <div><label>Horário</label><input id="t_horario" value="${registro.horario||''}" placeholder="hh:mm"></div>
+        <div><label>Hospital</label><input id="t_hospital" value="${registro.hospital||''}"></div>
+        <div><label>Contato</label><input id="t_contato" value="${registro.contato||''}"></div>
+        <div><label>Confirmado</label><select id="t_confirmado"><option ${registro.confirmado==='SIM'?'selected':''}>SIM</option><option ${registro.confirmado==='NAO'?'selected':''}>NAO</option></select></div>
+      </div>
+      <div class="modal-acoes">
+        <button class="btn-secundario" onclick="this.closest('.modal-fundo').remove()">Cancelar</button>
+        ${somenteLeitura() ? '' : `<button class="btn-primario" onclick="window.salvarTransporte('${registro.id||''}')">Salvar</button>`}
+      </div>
+    </div>`;
+  document.body.appendChild(fundo);
+};
+
+window.salvarTransporte = async function(id){
+  const dados = {
+    nome: document.getElementById('t_nome').value,
+    data: document.getElementById('t_data').value,
+    horario: document.getElementById('t_horario').value,
+    hospital: document.getElementById('t_hospital').value,
+    contato: document.getElementById('t_contato').value,
+    confirmado: document.getElementById('t_confirmado').value
+  };
+  try{
+    await salvarDoc('transportes', id||null, dados);
+    document.querySelector('.modal-fundo').remove();
+    renderTransportes();
+  }catch(erro){
+    alert('Não foi possível salvar. ('+erro.message+')');
+  }
+};
+
+// ============================================================
+// EQUIPAMENTOS
+// ============================================================
+let equipCache = [];
+
+async function renderEquipamentos(){
+  const c = document.getElementById('conteudo');
+  c.innerHTML = '<div class="topo-pagina"><div><h2>Controle de <span class="destaque">Equipamentos</span></h2><div class="barra-assinatura"></div></div></div><p style="color:#9FB3A6;">Carregando...</p>';
+  equipCache = await listarColecao('equipamentos');
+  desenharEquipamentos();
+}
+
+function desenharEquipamentos(){
+  const c = document.getElementById('conteudo');
+  const botaoNovo = somenteLeitura() ? '' : '<button class="btn-primario" onclick="window.abrirModalEquipamento()">+ Novo Empréstimo</button>';
+  c.innerHTML = `
+    <div class="topo-pagina">
+      <div><h2>Controle de <span class="destaque">Equipamentos</span></h2><div class="barra-assinatura"></div></div>
+      ${botaoNovo}
+    </div>
+    <div class="tabela-box">
+      <table>
+        <thead><tr><th>Nome</th><th>Equipamento</th><th>Contato</th><th>Status</th>${somenteLeitura()?'':'<th></th>'}</tr></thead>
+        <tbody>
+          ${equipCache.map(e=>`
+            <tr>
+              <td>${e.nome||''}</td><td>${e.equipamento||''}</td><td>${linkWhatsapp(e.contato)}</td>
+              <td>${badgeStatus(e.devolucao)}</td>
+              ${somenteLeitura() ? '' : `<td><button class="btn-secundario" onclick='window.abrirModalEquipamento(${JSON.stringify(e)})'>Editar</button></td>`}
+            </tr>`).join('') || `<tr><td colspan="5" style="text-align:center;color:#5E7368;padding:20px;">Nenhum empréstimo ainda.</td></tr>`}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+window.abrirModalEquipamento = function(registro){
+  registro = registro || {};
+  const fundo = document.createElement('div');
+  fundo.className = 'modal-fundo';
+  fundo.onclick = (ev)=>{ if(ev.target===fundo) fundo.remove(); };
+  fundo.innerHTML = `
+    <div class="modal" onclick="event.stopPropagation()">
+      <h3>${registro.id ? 'Editar' : 'Novo'} Empréstimo</h3>
+      <div class="modal-grid">
+        <div><label>Nome</label><input id="e_nome" value="${registro.nome||''}"></div>
+        <div><label>Equipamento</label><input id="e_equipamento" value="${registro.equipamento||''}"></div>
+        <div><label>Contato</label><input id="e_contato" value="${registro.contato||''}"></div>
+        <div><label>Status</label><select id="e_devolucao"><option ${registro.devolucao==='USANDO'?'selected':''}>USANDO</option><option ${registro.devolucao==='ENTREGUE'?'selected':''}>ENTREGUE</option></select></div>
+      </div>
+      <div class="modal-acoes">
+        <button class="btn-secundario" onclick="this.closest('.modal-fundo').remove()">Cancelar</button>
+        ${somenteLeitura() ? '' : `<button class="btn-primario" onclick="window.salvarEquipamento('${registro.id||''}')">Salvar</button>`}
+      </div>
+    </div>`;
+  document.body.appendChild(fundo);
+};
+
+window.salvarEquipamento = async function(id){
+  const dados = {
+    nome: document.getElementById('e_nome').value,
+    equipamento: document.getElementById('e_equipamento').value,
+    contato: document.getElementById('e_contato').value,
+    devolucao: document.getElementById('e_devolucao').value
+  };
+  try{
+    await salvarDoc('equipamentos', id||null, dados);
+    document.querySelector('.modal-fundo').remove();
+    renderEquipamentos();
+  }catch(erro){
+    alert('Não foi possível salvar. ('+erro.message+')');
+  }
+};
+
+// ============================================================
+// AGENDA (lista simples de compromissos, ordenada por data)
+// ============================================================
+let agendaCache = [];
+
+async function renderAgenda(){
+  const c = document.getElementById('conteudo');
+  c.innerHTML = '<div class="topo-pagina"><div><h2>Agenda</h2><div class="barra-assinatura"></div></div></div><p style="color:#9FB3A6;">Carregando...</p>';
+  agendaCache = await listarColecao('agendaEventos');
+  desenharAgenda();
+}
+
+function desenharAgenda(){
+  const c = document.getElementById('conteudo');
+  const botaoNovo = somenteLeitura() ? '' : '<button class="btn-primario" onclick="window.abrirModalEvento()">+ Novo Compromisso</button>';
+  c.innerHTML = `
+    <div class="topo-pagina">
+      <div><h2>Agenda</h2><div class="barra-assinatura"></div></div>
+      ${botaoNovo}
+    </div>
+    <div class="tabela-box">
+      <table>
+        <thead><tr><th>Data</th><th>Horário</th><th>Título</th><th>Descrição</th>${somenteLeitura()?'':'<th></th>'}</tr></thead>
+        <tbody>
+          ${agendaCache.map(ev=>`
+            <tr>
+              <td>${ev.data||''}</td><td>${ev.horaInicio||''}</td><td>${ev.titulo||''}</td><td>${ev.descricao||''}</td>
+              ${somenteLeitura() ? '' : `<td><button class="btn-secundario" onclick='window.abrirModalEvento(${JSON.stringify(ev)})'>Editar</button></td>`}
+            </tr>`).join('') || `<tr><td colspan="5" style="text-align:center;color:#5E7368;padding:20px;">Nenhum compromisso ainda.</td></tr>`}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+window.abrirModalEvento = function(registro){
+  registro = registro || {};
+  const fundo = document.createElement('div');
+  fundo.className = 'modal-fundo';
+  fundo.onclick = (ev)=>{ if(ev.target===fundo) fundo.remove(); };
+  fundo.innerHTML = `
+    <div class="modal" onclick="event.stopPropagation()">
+      <h3>${registro.id ? 'Editar' : 'Novo'} Compromisso</h3>
+      <div class="modal-grid">
+        <div><label>Título</label><input id="ev_titulo" value="${registro.titulo||''}"></div>
+        <div><label>Data</label><input id="ev_data" value="${registro.data||''}" placeholder="dd/mm/aaaa"></div>
+        <div><label>Horário</label><input id="ev_hora" value="${registro.horaInicio||''}" placeholder="hh:mm"></div>
+        <div class="campo-2"><label>Descrição</label><textarea id="ev_desc" rows="3">${registro.descricao||''}</textarea></div>
+      </div>
+      <div class="modal-acoes">
+        <button class="btn-secundario" onclick="this.closest('.modal-fundo').remove()">Cancelar</button>
+        ${somenteLeitura() ? '' : `<button class="btn-primario" onclick="window.salvarEvento('${registro.id||''}')">Salvar</button>`}
+      </div>
+    </div>`;
+  document.body.appendChild(fundo);
+};
+
+window.salvarEvento = async function(id){
+  const dados = {
+    titulo: document.getElementById('ev_titulo').value,
+    data: document.getElementById('ev_data').value,
+    horaInicio: document.getElementById('ev_hora').value,
+    descricao: document.getElementById('ev_desc').value
+  };
+  try{
+    await salvarDoc('agendaEventos', id||null, dados);
+    document.querySelector('.modal-fundo').remove();
+    renderAgenda();
+  }catch(erro){
+    alert('Não foi possível salvar. ('+erro.message+')');
+  }
+};
+
+// ============================================================
+// USUÁRIOS (só ADMIN) — bloquear/desbloquear, trocar cargo
+// IMPORTANTE: criar um LOGIN novo (e-mail/senha) tem que ser feito no
+// Firebase Console > Authentication > Add user, porque criar pelo app
+// derrubaria a sua própria sessão de admin (limitação do Firebase, não
+// do sistema). Depois de criar o login lá, você cria o PERFIL aqui,
+// colando o UID que o Console mostrou.
+// ============================================================
+let usuariosCache = [];
+
+async function renderUsuarios(){
+  if(USUARIO.cargo !== 'ADMIN'){
+    document.getElementById('conteudo').innerHTML = '<div class="topo-pagina"><div><h2>Acesso restrito</h2></div></div><p style="color:#9FB3A6;">Esta área é exclusiva do administrador.</p>';
+    return;
+  }
+  const c = document.getElementById('conteudo');
+  c.innerHTML = '<div class="topo-pagina"><div><h2>Controle de <span class="destaque">Usuários</span></h2><div class="barra-assinatura"></div></div></div><p style="color:#9FB3A6;">Carregando...</p>';
+  const snap = await getDocs(collection(db,'usuarios'));
+  usuariosCache = snap.docs.map(d=>({ id:d.id, ...d.data() }));
+  desenharUsuarios();
+}
+
+function desenharUsuarios(){
+  const c = document.getElementById('conteudo');
+  c.innerHTML = `
+    <div class="topo-pagina">
+      <div><h2>Controle de <span class="destaque">Usuários</span></h2><div class="barra-assinatura"></div></div>
+      <button class="btn-primario" onclick="window.abrirModalUsuario()">+ Novo Perfil</button>
+    </div>
+    <div class="aviso-perfil">
+      Pra criar um LOGIN novo (e-mail/senha), use o Firebase Console → Authentication → Add user.
+      Depois clique em "+ Novo Perfil" aqui e cole o UID que o Console mostrou. "+ Novo Perfil"
+      sozinho não cria acesso — só define nome, cargo e se está ativo.
+    </div>
+    <div class="tabela-box">
+      <table>
+        <thead><tr><th>Nome</th><th>E-mail</th><th>Cargo</th><th>Status</th><th></th></tr></thead>
+        <tbody>
+          ${usuariosCache.map(u=>`
+            <tr>
+              <td>${u.nome||''}</td><td>${u.email||''}</td><td>${rotuloCargo(normalizarTexto(u.cargo))}</td>
+              <td>${u.ativo===false ? '<span class="badge CANCELADO">BLOQUEADO</span>' : '<span class="badge CONCLUIDO">ATIVO</span>'}</td>
+              <td><button class="btn-secundario" onclick='window.abrirModalUsuario(${JSON.stringify(u)})'>Editar</button></td>
+            </tr>`).join('') || `<tr><td colspan="5" style="text-align:center;color:#5E7368;padding:20px;">Nenhum perfil cadastrado.</td></tr>`}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+window.abrirModalUsuario = function(registro){
+  registro = registro || {};
+  const fundo = document.createElement('div');
+  fundo.className = 'modal-fundo';
+  fundo.onclick = (ev)=>{ if(ev.target===fundo) fundo.remove(); };
+  fundo.innerHTML = `
+    <div class="modal" onclick="event.stopPropagation()">
+      <h3>${registro.id ? 'Editar' : 'Novo'} Perfil de Usuário</h3>
+      ${!registro.id ? `<div class="aviso-perfil">Cole aqui o UID que o Firebase Console mostrou ao criar o login. Sem isso, o perfil não fica ligado a nenhum acesso real.</div>` : ''}
+      <div class="modal-grid">
+        ${!registro.id ? `<div class="campo-2"><label>UID (do Firebase Authentication)</label><input id="u_uid" placeholder="Cole o UID aqui"></div>` : ''}
+        <div><label>Nome</label><input id="u_nome" value="${registro.nome||''}"></div>
+        <div><label>E-mail</label><input id="u_email" value="${registro.email||''}" ${registro.id?'disabled':''}></div>
+        <div>
+          <label>Cargo</label>
+          <select id="u_cargo">
+            <option value="ADMIN" ${registro.cargo==='ADMIN'?'selected':''}>Administrador</option>
+            <option value="ASSESSOR" ${registro.cargo==='ASSESSOR'?'selected':''}>Assessor</option>
+            <option value="ASSESSORA" ${registro.cargo==='ASSESSORA'?'selected':''}>Assessora</option>
+            <option value="VEREADOR" ${registro.cargo==='VEREADOR'?'selected':''}>Vereador (somente leitura)</option>
+          </select>
+        </div>
+        <div>
+          <label>Status de acesso</label>
+          <select id="u_ativo">
+            <option value="true" ${registro.ativo!==false?'selected':''}>Ativo (libera entrada)</option>
+            <option value="false" ${registro.ativo===false?'selected':''}>Bloqueado (derruba na hora)</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-acoes">
+        <button class="btn-secundario" onclick="this.closest('.modal-fundo').remove()">Cancelar</button>
+        <button class="btn-primario" onclick="window.salvarUsuario('${registro.id||''}')">Salvar</button>
+      </div>
+    </div>`;
+  document.body.appendChild(fundo);
+};
+
+window.salvarUsuario = async function(id){
+  const dados = {
+    nome: document.getElementById('u_nome').value.trim(),
+    email: document.getElementById('u_email').value.trim(),
+    cargo: document.getElementById('u_cargo').value,
+    ativo: document.getElementById('u_ativo').value === 'true'
+  };
+  let uidFinal = id;
+  if(!id){
+    uidFinal = document.getElementById('u_uid').value.trim();
+    if(!uidFinal){ alert('Cole o UID do Firebase Authentication antes de salvar.'); return; }
+  }
+  if(!dados.nome){ alert('Preencha o nome.'); return; }
+  try{
+    await setDoc(doc(db,'usuarios',uidFinal), dados, { merge:true });
+    document.querySelector('.modal-fundo').remove();
+    renderUsuarios();
+  }catch(erro){
+    alert('Não foi possível salvar. Só ADMIN pode editar perfis. ('+erro.message+')');
+  }
+};
+
+window.fazerLogin = fazerLogin;
+window.fazerLogout = fazerLogout;
+</script>
+</body>
+</html>
