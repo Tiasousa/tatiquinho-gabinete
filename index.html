@@ -146,6 +146,14 @@
   .modal input:focus,.modal select:focus,.modal textarea:focus{outline:none;border-color:var(--limao);}
   .modal-acoes{display:flex;justify-content:flex-end;gap:10px;margin-top:22px;}
   .aviso-perfil{background:rgba(232,174,0,.12);border:1px solid rgba(232,174,0,.35);color:#F2C43D;padding:11px 15px;border-radius:var(--raio-s);font-size:12px;margin-bottom:16px;}
+  .resultados-busca-pessoa{position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--preto-suave);border:1px solid var(--limao);border-radius:var(--raio-s);max-height:220px;overflow-y:auto;z-index:30;box-shadow:0 12px 30px rgba(0,0,0,.5);}
+  .item-resultado-pessoa{padding:9px 13px;cursor:pointer;border-bottom:1px solid var(--borda);display:flex;flex-direction:column;gap:2px;}
+  .item-resultado-pessoa:last-child{border-bottom:none;}
+  .item-resultado-pessoa:hover{background:var(--verde-escuro);}
+  .item-resultado-pessoa b{font-size:12.5px;color:#fff;}
+  .item-resultado-pessoa span{font-size:11px;color:var(--texto-suave);}
+  .item-resultado-pessoa.sem-resultado{color:var(--texto-fraco);font-size:12px;cursor:default;}
+  .item-resultado-pessoa.sem-resultado:hover{background:none;}
   .lista-anexos-item{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--borda);font-size:12px;}
   .lista-anexos-item span{display:flex;gap:8px;}
 
@@ -282,13 +290,16 @@ const STATUS_EVENTO = ['PLANEJAMENTO','CONFIRMADO','REALIZADO','CANCELADO'];
 // cadastra, na aba Configurações) em vez de uma lista fixa no código.
 let tiposAtendimentoCache = [];
 let tiposEquipamentoCache = [];
+let pessoasCache = [];
 async function carregarTiposConfiguraveis(){
   try{
     tiposAtendimentoCache = await listarColecaoSimples('tiposAtendimento');
     tiposEquipamentoCache = await listarColecaoSimples('tiposEquipamento');
+    pessoasCache = await listarColecaoSimples('pessoas');
   }catch(erro){
     tiposAtendimentoCache = [];
     tiposEquipamentoCache = [];
+    pessoasCache = [];
   }
 }
 
@@ -319,6 +330,30 @@ function linkWhatsapp(telefone){
   if(!numeros) return telefone;
   const comDDI = numeros.length <= 11 ? '55'+numeros : numeros;
   return '<a class="link-wa" target="_blank" href="https://wa.me/'+comDDI+'">💬 '+telefone+'</a>';
+}
+// Igual ao de cima, mas já abre o WhatsApp com uma mensagem pronta no campo
+// de texto — usado no painel de aniversariantes (você só confere e envia).
+function linkWhatsappComMensagem(telefone, mensagem){
+  const numeros = String(telefone||'').replace(/\D/g,'');
+  if(!numeros) return null;
+  const comDDI = numeros.length <= 11 ? '55'+numeros : numeros;
+  return 'https://wa.me/'+comDDI+'?text='+encodeURIComponent(mensagem);
+}
+// dataNascimento vem como texto "dd/mm/aaaa" ou "dd/mm". Retorna {dia,mes} ou null.
+function diaEMesNascimento(dataNascimento){
+  const partes = String(dataNascimento||'').split('/');
+  if(partes.length < 2) return null;
+  const dia = Number(partes[0]), mes = Number(partes[1]);
+  if(!dia || !mes) return null;
+  return { dia, mes };
+}
+function diasAteProximoAniversario(dataNascimento){
+  const dm = diaEMesNascimento(dataNascimento);
+  if(!dm) return null;
+  const hoje = new Date(); hoje.setHours(0,0,0,0);
+  let proximo = new Date(hoje.getFullYear(), dm.mes-1, dm.dia);
+  if(proximo < hoje) proximo = new Date(hoje.getFullYear()+1, dm.mes-1, dm.dia);
+  return Math.round((proximo - hoje) / (1000*60*60*24));
 }
 
 // ---------------- LOGIN ----------------
@@ -408,6 +443,7 @@ function montarMenu(){
   const itens = [
     {id:'dashboard',label:'Dashboard'},
     {id:'eventos',label:'Eventos'},
+    {id:'pessoas',label:'Pessoas'},
     {id:'atendimentos',label:'Atendimentos'},
     {id:'transportes',label:'Transportes'},
     {id:'equipamentos',label:'Equipamentos'},
@@ -434,7 +470,7 @@ function irPara(pagina){
   paginaAtual = pagina;
   marcarMenuAtivo(pagina);
   document.getElementById('conteudo').classList.toggle('modo-agenda', pagina==='agenda');
-  const funcoes = { dashboard:renderDashboard, eventos:renderEventos, atendimentos:renderAtendimentos, transportes:renderTransportes, equipamentos:renderEquipamentos, agenda:renderAgenda, usuarios:renderUsuarios, configuracoes:renderConfiguracoes };
+  const funcoes = { dashboard:renderDashboard, eventos:renderEventos, pessoas:renderPessoas, atendimentos:renderAtendimentos, transportes:renderTransportes, equipamentos:renderEquipamentos, agenda:renderAgenda, usuarios:renderUsuarios, configuracoes:renderConfiguracoes };
   funcoes[pagina]();
 }
 
@@ -473,11 +509,23 @@ async function renderDashboard(){
   const [atend, transp, equip] = await Promise.all([
     listarColecao('atendimentos'), listarColecao('transportes'), listarColecao('equipamentos')
   ]);
+  pessoasCache = await listarColecaoSimples('pessoas');
 
   const emAnalise = atend.filter(a=>normalizarTexto(a.status)==='EM ANALISE').length;
   const concluidos = atend.filter(a=>normalizarTexto(a.status)==='CONCLUIDO').length;
   const transpConfirmados = transp.filter(t=>normalizarTexto(t.confirmado)==='SIM').length;
   const equipEmUso = equip.filter(e=>normalizarTexto(e.devolucao)==='USANDO').length;
+
+  const aniversariantes = pessoasCache
+    .map(p=>({ pessoa:p, dias: diasAteProximoAniversario(p.dataNascimento) }))
+    .filter(x=>x.dias !== null && x.dias <= 7)
+    .sort((a,b)=>a.dias-b.dias);
+
+  function rotuloDias(d){
+    if(d===0) return 'Hoje';
+    if(d===1) return 'Amanhã';
+    return 'Em '+d+' dias';
+  }
 
   c.innerHTML = `
     <div class="topo-pagina"><div><h2>Visão <span class="destaque">Geral</span></h2><div class="barra-assinatura"></div></div></div>
@@ -489,6 +537,24 @@ async function renderDashboard(){
       <div class="kpi"><div class="num">${transpConfirmados}</div><div class="rot">Confirmados</div></div>
       <div class="kpi"><div class="num">${equipEmUso}</div><div class="rot">Equipamentos em Uso</div></div>
     </div>
+    ${aniversariantes.length ? `
+    <div class="agenda-box" style="height:auto;margin-bottom:24px;">
+      <h3 style="margin:0 0 4px;font-size:15px;color:#fff;">🎂 Aniversariantes dos próximos 7 dias</h3>
+      <p style="font-size:11.5px;color:var(--texto-suave);margin:0 0 14px;">Clique em Enviar pra abrir o WhatsApp já com a mensagem pronta.</p>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        ${aniversariantes.map(x=>{
+          const msg = 'Olá, '+(x.pessoa.nome||'').split(' ')[0]+'! Passando pra desejar um feliz aniversário em nome do vereador Tatiquinho. Muita saúde e felicidades! 🎉';
+          const link = linkWhatsappComMensagem(x.pessoa.telefone, msg);
+          return `<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 14px;background:var(--superficie-2);border-radius:10px;">
+            <div>
+              <b style="font-size:13px;color:#fff;">${x.pessoa.nome}</b>
+              <span style="font-size:11px;color:var(--limao);margin-left:8px;font-weight:700;">${rotuloDias(x.dias)}</span>
+            </div>
+            ${link ? `<a href="${link}" target="_blank" class="btn-secundario" style="text-decoration:none;">💬 Enviar</a>` : '<span style="font-size:11px;color:var(--texto-fraco);">Sem telefone</span>'}
+          </div>`;
+        }).join('')}
+      </div>
+    </div>` : ''}
     <div class="tabela-box">
       <table>
         <thead><tr><th>Data</th><th>Nome</th><th>Tipo</th><th>Status</th></tr></thead>
@@ -590,6 +656,7 @@ window.abrirModalAtendimento = function(registro){
     <div class="modal" onclick="event.stopPropagation()">
       <h3>${registro.id ? 'Editar' : 'Novo'} Atendimento</h3>
       <div class="modal-grid">
+        ${campoBuscaPessoa('m')}
         <div><label>Nome</label><input id="m_nome" value="${registro.nome||''}"></div>
         <div><label>Telefone</label><input id="m_telefone" value="${registro.telefone||''}" placeholder="64 99999-0000"></div>
         <div class="campo-2"><label>Endereço</label><input id="m_endereco" value="${registro.endereco||''}"></div>
@@ -605,6 +672,7 @@ window.abrirModalAtendimento = function(registro){
       </div>
     </div>`;
   document.body.appendChild(fundo);
+  ligarBuscaPessoa('m', { nome:'m_nome', telefone:'m_telefone', endereco:'m_endereco', bairro:'m_bairro' });
 };
 
 window.salvarAtendimento = async function(id){
@@ -674,6 +742,7 @@ window.abrirModalTransporte = function(registro){
     <div class="modal" onclick="event.stopPropagation()">
       <h3>${registro.id ? 'Editar' : 'Nova'} Solicitação de Transporte</h3>
       <div class="modal-grid">
+        ${campoBuscaPessoa('t')}
         <div><label>Nome</label><input id="t_nome" value="${registro.nome||''}"></div>
         <div><label>Data</label><input id="t_data" value="${registro.data||''}" placeholder="dd/mm/aaaa"></div>
         <div><label>Horário</label><input id="t_horario" value="${registro.horario||''}" placeholder="hh:mm"></div>
@@ -687,6 +756,7 @@ window.abrirModalTransporte = function(registro){
       </div>
     </div>`;
   document.body.appendChild(fundo);
+  ligarBuscaPessoa('t', { nome:'t_nome', telefone:'t_contato' });
 };
 
 window.salvarTransporte = async function(id){
@@ -767,6 +837,7 @@ window.abrirModalEquipamento = function(registro){
     <div class="modal" onclick="event.stopPropagation()">
       <h3>${registro.id ? 'Editar' : 'Novo'} Empréstimo</h3>
       <div class="modal-grid">
+        ${campoBuscaPessoa('e')}
         <div><label>Nome</label><input id="e_nome" value="${registro.nome||''}"></div>
         <div><label>Equipamento</label><select id="e_equipamento">${tiposEquipamentoCache.length ? tiposEquipamentoCache.map(t=>`<option ${t.nome===registro.equipamento?'selected':''}>${t.nome}</option>`).join('') : '<option value="">Nenhum tipo cadastrado — vá em Configurações</option>'}</select></div>
         <div><label>Contato</label><input id="e_contato" value="${registro.contato||''}"></div>
@@ -778,6 +849,7 @@ window.abrirModalEquipamento = function(registro){
       </div>
     </div>`;
   document.body.appendChild(fundo);
+  ligarBuscaPessoa('e', { nome:'e_nome', telefone:'e_contato' });
 };
 
 window.salvarEquipamento = async function(id){
@@ -1075,6 +1147,192 @@ window.salvarEvt = async function(id){
     alert('Não foi possível salvar. ('+erro.message+')');
   }
 };
+
+// ============================================================
+// PESSOAS — cadastro central. Alimenta o autopreenchimento em
+// Atendimentos/Transportes/Equipamentos e o painel de aniversariantes.
+// ============================================================
+async function renderPessoas(){
+  const c = document.getElementById('conteudo');
+  c.innerHTML = '<div class="topo-pagina"><div><h2>Cadastro de <span class="destaque">Pessoas</span></h2></div></div><p style="color:#9FB3A6;">Carregando...</p>';
+  pessoasCache = await listarColecaoSimples('pessoas');
+  desenharPessoas();
+}
+
+function desenharPessoas(filtroTexto){
+  const c = document.getElementById('conteudo');
+  const botaoNovo = somenteLeitura() ? '' : '<button class="btn-primario" onclick="window.abrirModalPessoa()">+ Nova Pessoa</button>';
+
+  const hoje = new Date();
+  const total = pessoasCache.length;
+  const aniversariantesHoje = pessoasCache.filter(p=>{
+    const dm = diaEMesNascimento(p.dataNascimento);
+    return dm && dm.dia===hoje.getDate() && dm.mes===hoje.getMonth()+1;
+  }).length;
+  const aniversariantesMes = pessoasCache.filter(p=>{
+    const dm = diaEMesNascimento(p.dataNascimento);
+    return dm && dm.mes===hoje.getMonth()+1;
+  }).length;
+  const comEndereco = pessoasCache.filter(p=>p.bairro).length;
+
+  let lista = pessoasCache;
+  if(filtroTexto){
+    const f = normalizarTexto(filtroTexto);
+    lista = lista.filter(p=>
+      normalizarTexto(p.nome).includes(f) ||
+      normalizarTexto(p.bairro).includes(f) ||
+      normalizarTexto(p.cpf).includes(f) ||
+      normalizarTexto(p.rg).includes(f) ||
+      normalizarTexto(p.tituloEleitor).includes(f)
+    );
+  }
+
+  c.innerHTML = `
+    <div class="topo-pagina">
+      <div class="cabecalho-titulo">
+        <h2>Cadastro de <span class="destaque">Pessoas</span></h2>
+        <p>Base única de contatos, usada nos outros módulos e nos aniversários.</p>
+      </div>
+      <div class="kpis-mini-row">
+        ${kpiMini('rgba(22,163,74,.18)','#3FD17D','👤',total,'Total')}
+        ${kpiMini('rgba(232,174,0,.18)','#F2C43D','🎂',aniversariantesHoje,'Aniversário Hoje')}
+        ${kpiMini('rgba(168,85,247,.18)','#C084FC','📆',aniversariantesMes,'Aniversário no Mês')}
+        ${kpiMini('rgba(59,130,246,.18)','#60A5FA','📍',comEndereco,'Com Bairro')}
+      </div>
+      ${botaoNovo}
+    </div>
+    <div class="barra-acoes">
+      <input id="fTextoPessoa" placeholder="Buscar por nome, bairro, CPF, RG ou título..." value="${filtroTexto||''}" oninput="window.filtrarPessoas()">
+      <button class="btn-secundario" onclick="window.irPara('pessoas')">↻ Atualizar</button>
+    </div>
+    <div class="tabela-box">
+      <table>
+        <thead><tr><th>Nome</th><th>CPF</th><th>Telefone</th><th>Bairro</th><th>Nascimento</th>${somenteLeitura()?'':'<th></th>'}</tr></thead>
+        <tbody>
+          ${lista.map(p=>`
+            <tr>
+              <td>${p.nome||''}</td><td>${p.cpf||'-'}</td><td>${linkWhatsapp(p.telefone)}</td><td>${p.bairro||''}</td><td>${p.dataNascimento||'-'}</td>
+              ${somenteLeitura() ? '' : `<td><button class="btn-secundario" onclick='window.abrirModalPessoa(${JSON.stringify(p)})'>Editar</button></td>`}
+            </tr>`).join('') || `<tr><td colspan="6" style="text-align:center;color:#5E7368;padding:20px;">${filtroTexto ? 'Nenhum resultado.' : 'Nenhuma pessoa cadastrada ainda.'}</td></tr>`}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+window.filtrarPessoas = function(){
+  desenharPessoas(document.getElementById('fTextoPessoa').value);
+};
+
+window.abrirModalPessoa = function(registro){
+  registro = registro || {};
+  const fundo = document.createElement('div');
+  fundo.className = 'modal-fundo';
+  fundo.onclick = (ev)=>{ if(ev.target===fundo) fundo.remove(); };
+  fundo.innerHTML = `
+    <div class="modal" onclick="event.stopPropagation()">
+      <h3>${registro.id ? 'Editar' : 'Nova'} Pessoa</h3>
+      <div class="modal-grid">
+        <div class="campo-2"><label>Nome</label><input id="p_nome" value="${registro.nome||''}"></div>
+        <div><label>Telefone</label><input id="p_telefone" value="${registro.telefone||''}" placeholder="64 99999-0000"></div>
+        <div><label>Data de nascimento</label><input id="p_nascimento" value="${registro.dataNascimento||''}" placeholder="dd/mm/aaaa"></div>
+        <div><label>RG (opcional)</label><input id="p_rg" value="${registro.rg||''}"></div>
+        <div><label>CPF (opcional)</label><input id="p_cpf" value="${registro.cpf||''}"></div>
+        <div class="campo-2"><label>Título de Eleitor n° (opcional)</label><input id="p_titulo" value="${registro.tituloEleitor||''}"></div>
+        <div><label>Bairro</label><input id="p_bairro" value="${registro.bairro||''}"></div>
+        <div><label>Endereço</label><input id="p_endereco" value="${registro.endereco||''}"></div>
+        <div class="campo-2"><label>Observações</label><textarea id="p_obs" rows="2">${registro.observacoes||''}</textarea></div>
+      </div>
+      <div class="modal-acoes">
+        <button class="btn-secundario" onclick="this.closest('.modal-fundo').remove()">Cancelar</button>
+        ${somenteLeitura() ? '' : `<button class="btn-primario" onclick="window.salvarPessoa('${registro.id||''}')">Salvar</button>`}
+      </div>
+    </div>`;
+  document.body.appendChild(fundo);
+};
+
+window.salvarPessoa = async function(id){
+  const dados = {
+    nome: document.getElementById('p_nome').value.trim(),
+    telefone: document.getElementById('p_telefone').value.trim(),
+    dataNascimento: document.getElementById('p_nascimento').value.trim(),
+    rg: document.getElementById('p_rg').value.trim(),
+    cpf: document.getElementById('p_cpf').value.trim(),
+    tituloEleitor: document.getElementById('p_titulo').value.trim(),
+    bairro: document.getElementById('p_bairro').value.trim(),
+    endereco: document.getElementById('p_endereco').value.trim(),
+    observacoes: document.getElementById('p_obs').value.trim()
+  };
+  if(!dados.nome){ alert('Preencha o nome.'); return; }
+  try{
+    await salvarDoc('pessoas', id||null, dados);
+    document.querySelector('.modal-fundo').remove();
+    pessoasCache = await listarColecaoSimples('pessoas');
+    desenharPessoas();
+  }catch(erro){
+    alert('Não foi possível salvar. ('+erro.message+')');
+  }
+};
+
+// Busca rápida de pessoa cadastrada — usada nos formulários de Atendimento,
+// Transporte e Equipamento pra identificar alguém sem digitar tudo de novo.
+// Busca por nome, CPF, RG, título de eleitor ou telefone.
+function campoBuscaPessoa(prefixo){
+  return `
+    <div class="campo-2 busca-pessoa-wrap" style="position:relative;">
+      <label>Buscar pessoa já cadastrada (nome, CPF, RG, título ou telefone)</label>
+      <input id="${prefixo}_buscaPessoa" placeholder="Comece a digitar..." autocomplete="off">
+      <div id="${prefixo}_resultadosPessoa" class="resultados-busca-pessoa hidden"></div>
+    </div>`;
+}
+
+function ligarBuscaPessoa(prefixo, mapaCampos){
+  const input = document.getElementById(prefixo+'_buscaPessoa');
+  const resultados = document.getElementById(prefixo+'_resultadosPessoa');
+  if(!input || !resultados) return;
+
+  input.addEventListener('input', ()=>{
+    const termo = normalizarTexto(input.value);
+    const termoNumeros = input.value.replace(/\D/g,'');
+    if(termo.length < 2){ resultados.classList.add('hidden'); resultados.innerHTML=''; return; }
+
+    const encontrados = pessoasCache.filter(p=>
+      normalizarTexto(p.nome).includes(termo) ||
+      (p.cpf && normalizarTexto(p.cpf).includes(termo)) ||
+      (p.rg && normalizarTexto(p.rg).includes(termo)) ||
+      (p.tituloEleitor && normalizarTexto(p.tituloEleitor).includes(termo)) ||
+      (termoNumeros.length>=3 && String(p.telefone||'').replace(/\D/g,'').includes(termoNumeros))
+    ).slice(0,6);
+
+    if(!encontrados.length){
+      resultados.innerHTML = '<div class="item-resultado-pessoa sem-resultado">Nenhuma pessoa encontrada. Preencha manualmente abaixo.</div>';
+      resultados.classList.remove('hidden');
+      return;
+    }
+    resultados.innerHTML = encontrados.map(p=>`
+      <div class="item-resultado-pessoa" data-id="${p.id}">
+        <b>${p.nome}</b>
+        <span>${p.cpf ? 'CPF '+p.cpf+' · ' : ''}${p.telefone||'sem telefone'}</span>
+      </div>`).join('');
+    resultados.classList.remove('hidden');
+    resultados.querySelectorAll('.item-resultado-pessoa[data-id]').forEach(el=>{
+      el.onclick = ()=>{
+        const pessoa = pessoasCache.find(p=>p.id===el.dataset.id);
+        if(!pessoa) return;
+        Object.keys(mapaCampos).forEach(campoPessoa=>{
+          const alvo = document.getElementById(mapaCampos[campoPessoa]);
+          if(alvo && pessoa[campoPessoa]) alvo.value = pessoa[campoPessoa];
+        });
+        input.value = pessoa.nome;
+        resultados.classList.add('hidden');
+      };
+    });
+  });
+
+  document.addEventListener('click', (ev)=>{
+    if(!ev.target.closest('.busca-pessoa-wrap')) resultados.classList.add('hidden');
+  }, { once:false });
+}
 
 // ============================================================
 // CONFIGURAÇÕES (só ADMIN) — cadastra os tipos usados nos formulários
