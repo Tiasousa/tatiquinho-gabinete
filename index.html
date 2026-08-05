@@ -133,36 +133,42 @@
   .lista-anexos-item{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--borda);font-size:12px;}
   .lista-anexos-item span{display:flex;gap:8px;}
 
-  /* ---------- AGENDA (estilo calendário) ---------- */
-  .agenda-layout{display:grid;grid-template-columns:1.7fr 1fr;gap:18px;align-items:start;}
-  .agenda-box{background:var(--superficie);border:1px solid var(--borda);border-radius:var(--raio-m);padding:20px;}
-  .agenda-nav{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
-  .mes-atual-agenda{font-size:16px;color:#fff;text-transform:capitalize;min-width:150px;text-align:center;}
-  .btn-nav-mes{background:var(--superficie-2);border:1px solid var(--borda);color:var(--texto);width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:16px;line-height:1;}
+  /* ---------- AGENDA (estilo calendário, sem rolagem, proporcional à tela) ---------- */
+  main.modo-agenda{overflow:hidden;display:flex;flex-direction:column;}
+  main.modo-agenda .topo-pagina{flex:0 0 auto;}
+  .agenda-layout{display:flex;gap:16px;flex:1;min-height:0;}
+  .agenda-layout > .agenda-box{flex:1;min-height:0;min-width:0;display:flex;flex-direction:column;overflow:hidden;}
+  .agenda-layout > .agenda-box.agenda-lateral{flex:0 0 320px;}
+  .agenda-box{background:var(--superficie);border:1px solid var(--borda);border-radius:var(--raio-m);padding:16px 18px;}
+  .agenda-nav{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex:0 0 auto;}
+  .mes-atual-agenda{font-size:15px;color:#fff;text-transform:capitalize;min-width:130px;text-align:center;}
+  .btn-nav-mes{background:var(--superficie-2);border:1px solid var(--borda);color:var(--texto);width:28px;height:28px;border-radius:8px;cursor:pointer;font-size:15px;line-height:1;flex-shrink:0;}
   .btn-nav-mes:hover{border-color:var(--limao);color:var(--limao);}
-  .agenda-cabecalho-dias{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;font-size:10px;color:var(--texto-fraco);font-weight:800;letter-spacing:.5px;margin-bottom:8px;}
-  .agenda-grade{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;}
-  .dia-agenda{aspect-ratio:1/0.85;border:1px solid var(--borda);border-radius:10px;padding:7px;cursor:pointer;transition:border-color .15s ease,background .15s ease;}
+  .agenda-cabecalho-dias{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;font-size:clamp(8px,1.6vw,10px);color:var(--texto-fraco);font-weight:800;letter-spacing:.4px;margin-bottom:6px;flex:0 0 auto;}
+  .agenda-grade{display:grid;grid-template-columns:repeat(7,1fr);grid-auto-rows:minmax(0,1fr);gap:4px;flex:1;min-height:0;}
+  .dia-agenda{border:1px solid var(--borda);border-radius:8px;padding:4px 6px;cursor:pointer;transition:border-color .15s ease,background .15s ease;min-height:0;overflow:hidden;display:flex;flex-direction:column;}
   .dia-agenda:hover{border-color:var(--limao);}
   .dia-agenda.vazio{border:none;cursor:default;}
   .dia-agenda.vazio:hover{border-color:transparent;}
   .dia-agenda.hoje{border-color:var(--limao);}
   .dia-agenda.hoje .num-dia-agenda{color:var(--limao);}
   .dia-agenda.selecionado{background:var(--verde-escuro);border-color:var(--limao);}
-  .num-dia-agenda{font-size:12.5px;font-weight:700;color:var(--texto);}
-  .pontos-dia-agenda{display:flex;gap:3px;margin-top:6px;flex-wrap:wrap;align-items:center;}
-  .ponto-evento{width:6px;height:6px;border-radius:50%;background:var(--limao);display:inline-block;}
-  .mais-pontos{font-size:8.5px;color:var(--texto-fraco);font-weight:700;}
-  .agenda-lateral h3{margin:0 0 16px;font-size:15px;color:#fff;font-weight:800;}
-  .lista-eventos-dia{display:flex;flex-direction:column;gap:10px;max-height:56vh;overflow-y:auto;}
-  .item-evento-dia{display:flex;gap:10px;cursor:pointer;padding:6px;border-radius:8px;transition:background .15s ease;}
+  .num-dia-agenda{font-size:clamp(10px,1.4vw,12.5px);font-weight:700;color:var(--texto);}
+  .pontos-dia-agenda{display:flex;gap:2px;margin-top:auto;flex-wrap:wrap;align-items:center;}
+  .ponto-evento{width:5px;height:5px;border-radius:50%;background:var(--limao);display:inline-block;flex-shrink:0;}
+  .mais-pontos{font-size:7.5px;color:var(--texto-fraco);font-weight:700;}
+  .agenda-lateral h3{margin:0 0 12px;font-size:14px;color:#fff;font-weight:800;flex:0 0 auto;}
+  .lista-eventos-dia{display:flex;flex-direction:column;gap:8px;flex:1;min-height:0;overflow-y:auto;}
+  .item-evento-dia{display:flex;gap:9px;cursor:pointer;padding:5px;border-radius:8px;transition:background .15s ease;flex-shrink:0;}
   .item-evento-dia:hover{background:var(--superficie-2);}
-  .faixa-evento{width:4px;border-radius:4px;background:var(--degrade-assinatura);flex-shrink:0;}
-  .hora-evento-dia{font-size:10.5px;color:var(--limao);font-weight:800;text-transform:uppercase;letter-spacing:.4px;}
-  .titulo-evento-dia{font-size:13px;color:#fff;font-weight:700;margin-top:2px;}
-  .desc-evento-dia{font-size:11.5px;color:var(--texto-suave);margin-top:3px;}
+  .faixa-evento{width:3px;border-radius:4px;background:var(--degrade-assinatura);flex-shrink:0;}
+  .hora-evento-dia{font-size:10px;color:var(--limao);font-weight:800;text-transform:uppercase;letter-spacing:.3px;}
+  .titulo-evento-dia{font-size:12.5px;color:#fff;font-weight:700;margin-top:2px;}
+  .desc-evento-dia{font-size:11px;color:var(--texto-suave);margin-top:2px;}
   @media(max-width:900px){
-    .agenda-layout{grid-template-columns:1fr;}
+    .agenda-layout{flex-direction:column;}
+    .agenda-layout > .agenda-box.agenda-lateral{flex:1;}
+    .agenda-layout > .agenda-box{flex:1.4;}
   }
 
   @media(max-width:760px){
@@ -390,6 +396,7 @@ function marcarMenuAtivo(id){
 function irPara(pagina){
   paginaAtual = pagina;
   marcarMenuAtivo(pagina);
+  document.getElementById('conteudo').classList.toggle('modo-agenda', pagina==='agenda');
   const funcoes = { dashboard:renderDashboard, atendimentos:renderAtendimentos, transportes:renderTransportes, equipamentos:renderEquipamentos, agenda:renderAgenda, usuarios:renderUsuarios };
   funcoes[pagina]();
 }
