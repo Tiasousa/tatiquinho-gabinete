@@ -14,6 +14,7 @@
 <meta name="apple-mobile-web-app-title" content="Tatiquinho">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <style>
   /* ============================================================
      TOKENS DE MARCA — TATIQUINHO
@@ -144,6 +145,12 @@
 
   /* ---------- KPIs ---------- */
   .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:24px;}
+  .graficos-dashboard-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
+  .listas-dashboard-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px;}
+  @media(max-width:1000px){
+    .graficos-dashboard-grid{grid-template-columns:1fr;}
+    .listas-dashboard-grid{grid-template-columns:1fr;}
+  }
   .kpi{background:var(--superficie);border:1px solid var(--borda);border-left:4px solid var(--limao);border-radius:var(--raio-m);padding:18px 20px;}
   .kpi .num{font-size:28px;font-weight:800;color:#fff;line-height:1;}
   .kpi .rot{font-size:10.5px;color:var(--texto-suave);text-transform:uppercase;letter-spacing:.5px;margin-top:8px;font-weight:700;}
@@ -559,19 +566,64 @@ async function salvarDoc(colecaoNome, id, dados){
 // ============================================================
 // DASHBOARD
 // ============================================================
+let chartsDashboardAtivos = [];
+
+// dd/mm/aaaa -> Date (ou null se inválido). Reaproveitado em vários lugares
+// do Dashboard pra ordenar por data mais próxima.
+function parseDataBRGlobal(str){
+  const p = String(str||'').split('/');
+  if(p.length !== 3) return null;
+  const d = new Date(Number(p[2]), Number(p[1])-1, Number(p[0]));
+  return isNaN(d.getTime()) ? null : d;
+}
+
 async function renderDashboard(){
   const c = document.getElementById('conteudo');
   c.innerHTML = '<div class="topo-pagina"><div><h2>Visão <span class="destaque">Geral</span></h2><div class="barra-assinatura"></div></div></div><p style="color:#9FB3A6;">Carregando...</p>';
 
-  const [atend, transp, equip] = await Promise.all([
-    listarColecao('atendimentos'), listarColecao('transportes'), listarColecao('equipamentos')
+  chartsDashboardAtivos.forEach(ch=>{ try{ ch.destroy(); }catch(e){} });
+  chartsDashboardAtivos = [];
+
+  const [atend, transp, equip, agendaEv, eventosDb] = await Promise.all([
+    listarColecao('atendimentos'), listarColecao('transportes'), listarColecao('equipamentos'),
+    listarColecaoSimples('agendaEventos'), listarColecao('eventos')
   ]);
   pessoasCache = await listarColecaoSimples('pessoas');
 
   const emAnalise = atend.filter(a=>normalizarTexto(a.status)==='EM ANALISE').length;
   const concluidos = atend.filter(a=>normalizarTexto(a.status)==='CONCLUIDO').length;
+  const cancelados = atend.filter(a=>normalizarTexto(a.status)==='CANCELADO').length;
   const transpConfirmados = transp.filter(t=>normalizarTexto(t.confirmado)==='SIM').length;
   const equipEmUso = equip.filter(e=>normalizarTexto(e.devolucao)==='USANDO').length;
+
+  // --- Agrupamentos pros gráficos ---
+  const porTipo = {};
+  atend.forEach(a=>{ const t = a.tipoAtendimento || 'Sem tipo'; porTipo[t] = (porTipo[t]||0)+1; });
+  const tiposOrdenados = Object.entries(porTipo).sort((a,b)=>b[1]-a[1]);
+
+  const porBairro = {};
+  atend.forEach(a=>{ const b = a.bairro || 'Sem bairro'; porBairro[b] = (porBairro[b]||0)+1; });
+  const bairrosOrdenados = Object.entries(porBairro).sort((a,b)=>b[1]-a[1]).slice(0,8);
+
+  const porEquip = {};
+  equip.forEach(e=>{ const t = e.equipamento || 'Sem tipo'; porEquip[t] = (porEquip[t]||0)+1; });
+  const equipOrdenados = Object.entries(porEquip).sort((a,b)=>b[1]-a[1]);
+
+  const hoje = new Date(); hoje.setHours(0,0,0,0);
+
+  const proximosCompromissos = agendaEv
+    .map(ev=>({ ...ev, dataObj: parseDataBRGlobal(ev.data) }))
+    .filter(ev=>ev.dataObj && ev.dataObj >= hoje)
+    .sort((a,b)=>a.dataObj-b.dataObj)
+    .slice(0,5);
+
+  const proximosEventos = eventosDb
+    .map(ev=>({ ...ev, dataObj: parseDataBRGlobal(ev.data) }))
+    .filter(ev=>normalizarTexto(ev.status)!=='REALIZADO' && normalizarTexto(ev.status)!=='CANCELADO')
+    .sort((a,b)=>(a.dataObj||new Date(8640000000000000)) - (b.dataObj||new Date(8640000000000000)))
+    .slice(0,5);
+
+  const ultimosAtendimentos = atend.slice(0,6);
 
   const aniversariantes = pessoasCache
     .map(p=>({ pessoa:p, dias: diasAteProximoAniversario(p.dataNascimento) }))
@@ -594,8 +646,9 @@ async function renderDashboard(){
       <div class="kpi"><div class="num">${transpConfirmados}</div><div class="rot">Confirmados</div></div>
       <div class="kpi"><div class="num">${equipEmUso}</div><div class="rot">Equipamentos em Uso</div></div>
     </div>
+
     ${aniversariantes.length ? `
-    <div class="agenda-box" style="height:auto;margin-bottom:24px;">
+    <div class="agenda-box" style="height:auto;margin-bottom:20px;">
       <h3 style="margin:0 0 4px;font-size:15px;color:#fff;">🎂 Aniversariantes dos próximos 7 dias</h3>
       <p style="font-size:11.5px;color:var(--texto-suave);margin:0 0 14px;">Clique em Enviar pra abrir o WhatsApp já com a mensagem pronta.</p>
       <div style="display:flex;flex-direction:column;gap:8px;">
@@ -612,15 +665,131 @@ async function renderDashboard(){
         }).join('')}
       </div>
     </div>` : ''}
-    <div class="tabela-box">
-      <table>
-        <thead><tr><th>Data</th><th>Nome</th><th>Tipo</th><th>Status</th></tr></thead>
-        <tbody>
-          ${atend.slice(0,10).map(a=>`<tr><td>${a.data||''}</td><td>${a.nome||''}</td><td>${a.tipoAtendimento||''}</td><td>${badgeStatus(a.status)}</td></tr>`).join('') || '<tr><td colspan="4" style="text-align:center;color:#5E7368;padding:20px;">Nenhum atendimento ainda.</td></tr>'}
-        </tbody>
-      </table>
+
+    <div class="graficos-dashboard-grid">
+      <div class="agenda-box" style="height:auto;">
+        <h3 style="margin:0 0 14px;font-size:13px;color:var(--texto-suave);text-transform:uppercase;letter-spacing:.4px;">Atendimentos por Status</h3>
+        <div style="position:relative;height:210px;"><canvas id="chartStatus"></canvas></div>
+      </div>
+      <div class="agenda-box" style="height:auto;">
+        <h3 style="margin:0 0 14px;font-size:13px;color:var(--texto-suave);text-transform:uppercase;letter-spacing:.4px;">Atendimentos por Tipo</h3>
+        <div style="position:relative;height:210px;"><canvas id="chartTipo"></canvas></div>
+      </div>
+    </div>
+
+    <div class="graficos-dashboard-grid">
+      <div class="agenda-box" style="height:auto;">
+        <h3 style="margin:0 0 14px;font-size:13px;color:var(--texto-suave);text-transform:uppercase;letter-spacing:.4px;">Atendimentos por Bairro</h3>
+        <div style="position:relative;height:220px;">${bairrosOrdenados.length ? '<canvas id="chartBairro"></canvas>' : '<p style="color:#5E7368;font-size:12px;">Sem dados ainda.</p>'}</div>
+      </div>
+      <div class="agenda-box" style="height:auto;">
+        <h3 style="margin:0 0 14px;font-size:13px;color:var(--texto-suave);text-transform:uppercase;letter-spacing:.4px;">Equipamentos — onde mais ajudou</h3>
+        <div style="position:relative;height:220px;">${equipOrdenados.length ? '<canvas id="chartEquip"></canvas>' : '<p style="color:#5E7368;font-size:12px;">Sem empréstimos ainda.</p>'}</div>
+      </div>
+    </div>
+
+    <div class="listas-dashboard-grid">
+      <div class="agenda-box" style="height:auto;">
+        <h3 style="margin:0 0 14px;font-size:13px;color:var(--texto-suave);text-transform:uppercase;letter-spacing:.4px;">Últimos Atendimentos</h3>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          ${ultimosAtendimentos.map(a=>`
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--superficie-2);border-radius:8px;">
+              <div><b style="font-size:12.5px;color:#fff;">${a.nome||'-'}</b><div style="font-size:10.5px;color:var(--texto-suave);">${a.tipoAtendimento||''} · ${a.data||''}</div></div>
+              ${badgeStatus(a.status)}
+            </div>`).join('') || '<p style="color:#5E7368;font-size:12px;">Nenhum atendimento ainda.</p>'}
+        </div>
+      </div>
+      <div class="agenda-box" style="height:auto;">
+        <h3 style="margin:0 0 14px;font-size:13px;color:var(--texto-suave);text-transform:uppercase;letter-spacing:.4px;">Próximos Compromissos (Agenda)</h3>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          ${proximosCompromissos.map(ev=>`
+            <div style="padding:8px 12px;background:var(--superficie-2);border-radius:8px;">
+              <b style="font-size:12.5px;color:#fff;">${ev.titulo||''}</b>
+              <div style="font-size:10.5px;color:var(--limao);font-weight:700;">${ev.data||''}${ev.horaInicio?' · '+ev.horaInicio:''}</div>
+            </div>`).join('') || '<p style="color:#5E7368;font-size:12px;">Nenhum compromisso agendado.</p>'}
+        </div>
+      </div>
+      <div class="agenda-box" style="height:auto;">
+        <h3 style="margin:0 0 14px;font-size:13px;color:var(--texto-suave);text-transform:uppercase;letter-spacing:.4px;">Próximos Eventos</h3>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          ${proximosEventos.map(ev=>`
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--superficie-2);border-radius:8px;">
+              <div><b style="font-size:12.5px;color:#fff;">${ev.titulo||''}</b><div style="font-size:10.5px;color:var(--texto-suave);">${ev.data||'Sem data'}${ev.local?' · '+ev.local:''}</div></div>
+              ${badgeStatus(ev.status)}
+            </div>`).join('') || '<p style="color:#5E7368;font-size:12px;">Nenhum evento planejado.</p>'}
+        </div>
+      </div>
     </div>
   `;
+
+  // ---- Monta os gráficos (Chart.js) ----
+  const corTexto = '#9FB3A6';
+  const corGrade = 'rgba(159,179,166,.12)';
+  Chart.defaults.font.family = "'Inter', sans-serif";
+
+  chartsDashboardAtivos.push(new Chart(document.getElementById('chartStatus'), {
+    type:'doughnut',
+    data:{
+      labels:['Concluídos','Em Análise','Cancelados'],
+      datasets:[{ data:[concluidos, emAnalise, cancelados], backgroundColor:['#3FD17D','#F2C43D','#FF6B70'], borderWidth:0 }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false, cutout:'62%',
+      plugins:{ legend:{ position:'bottom', labels:{ color:corTexto, boxWidth:9, boxHeight:9, padding:14, font:{size:10.5,weight:'600'} } } }
+    }
+  }));
+
+  chartsDashboardAtivos.push(new Chart(document.getElementById('chartTipo'), {
+    type:'bar',
+    data:{
+      labels:tiposOrdenados.map(t=>t[0]),
+      datasets:[{ data:tiposOrdenados.map(t=>t[1]), backgroundColor:'#A8D948', borderRadius:6, maxBarThickness:22 }]
+    },
+    options:{
+      indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ display:false } },
+      scales:{
+        x:{ beginAtZero:true, ticks:{ color:corTexto, stepSize:1, font:{size:9.5} }, grid:{ color:corGrade } },
+        y:{ ticks:{ color:corTexto, font:{size:9.5} }, grid:{ display:false } }
+      }
+    }
+  }));
+
+  if(bairrosOrdenados.length){
+    chartsDashboardAtivos.push(new Chart(document.getElementById('chartBairro'), {
+      type:'bar',
+      data:{
+        labels:bairrosOrdenados.map(b=>b[0]),
+        datasets:[{ data:bairrosOrdenados.map(b=>b[1]), backgroundColor:'#60A5FA', borderRadius:6, maxBarThickness:26 }]
+      },
+      options:{
+        responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{ display:false } },
+        scales:{
+          x:{ ticks:{ color:corTexto, font:{size:9}, maxRotation:35, minRotation:20 }, grid:{ display:false } },
+          y:{ beginAtZero:true, ticks:{ color:corTexto, stepSize:1, font:{size:9.5} }, grid:{ color:corGrade } }
+        }
+      }
+    }));
+  }
+
+  if(equipOrdenados.length){
+    chartsDashboardAtivos.push(new Chart(document.getElementById('chartEquip'), {
+      type:'bar',
+      data:{
+        labels:equipOrdenados.map(e=>e[0]),
+        datasets:[{ data:equipOrdenados.map(e=>e[1]), backgroundColor:'#C084FC', borderRadius:6, maxBarThickness:26 }]
+      },
+      options:{
+        responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{ display:false } },
+        scales:{
+          x:{ ticks:{ color:corTexto, font:{size:9}, maxRotation:35, minRotation:20 }, grid:{ display:false } },
+          y:{ beginAtZero:true, ticks:{ color:corTexto, stepSize:1, font:{size:9.5} }, grid:{ color:corGrade } }
+        }
+      }
+    }));
+  }
 }
 
 // ============================================================
