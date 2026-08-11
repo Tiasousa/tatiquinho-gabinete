@@ -518,6 +518,7 @@ function montarMenu(){
     {id:'dashboard',label:'Dashboard'},
     {id:'eventos',label:'Eventos'},
     {id:'pessoas',label:'Cadastro'},
+    {id:'votantes',label:'Votantes'},
     {id:'atendimentos',label:'Atendimentos'},
     {id:'transportes',label:'Transportes'},
     {id:'equipamentos',label:'Equipamentos'},
@@ -544,7 +545,7 @@ function irPara(pagina){
   paginaAtual = pagina;
   marcarMenuAtivo(pagina);
   document.getElementById('conteudo').classList.toggle('modo-agenda', pagina==='agenda');
-  const funcoes = { dashboard:renderDashboard, eventos:renderEventos, pessoas:renderPessoas, atendimentos:renderAtendimentos, transportes:renderTransportes, equipamentos:renderEquipamentos, agenda:renderAgenda, usuarios:renderUsuarios, configuracoes:renderConfiguracoes };
+  const funcoes = { dashboard:renderDashboard, eventos:renderEventos, pessoas:renderPessoas, votantes:renderVotantes, atendimentos:renderAtendimentos, transportes:renderTransportes, equipamentos:renderEquipamentos, agenda:renderAgenda, usuarios:renderUsuarios, configuracoes:renderConfiguracoes };
   funcoes[pagina]();
 }
 
@@ -1395,6 +1396,12 @@ async function renderPessoas(){
   desenharPessoas();
 }
 
+function badgeIntencao(valor){
+  const mapa = { SIM:'✅ Vai votar', INDECISO:'🤔 Indeciso', NAO:'❌ Não vai votar' };
+  if(!valor || !mapa[valor]) return '<span class="badge-intencao vazio">Não informado</span>';
+  return `<span class="badge-intencao ${valor}">${mapa[valor]}</span>`;
+}
+
 let chartsPessoasAtivos = [];
 
 function desenharPessoas(filtroTexto){
@@ -1420,12 +1427,6 @@ function desenharPessoas(filtroTexto){
   const votosIndeciso = pessoasCache.filter(p=>p.intencaoVoto==='INDECISO').length;
   const votosNao = pessoasCache.filter(p=>p.intencaoVoto==='NAO').length;
   const votosNaoInformado = total - votosSim - votosIndeciso - votosNao;
-
-  function badgeIntencao(valor){
-    const mapa = { SIM:'✅ Vai votar', INDECISO:'🤔 Indeciso', NAO:'❌ Não vai votar' };
-    if(!valor || !mapa[valor]) return '<span class="badge-intencao vazio">Não informado</span>';
-    return `<span class="badge-intencao ${valor}">${mapa[valor]}</span>`;
-  }
 
   let lista = pessoasCache;
   if(filtroTexto){
@@ -1503,6 +1504,84 @@ function desenharPessoas(filtroTexto){
 
 window.filtrarPessoas = function(){
   desenharPessoas(document.getElementById('fTextoPessoa').value);
+};
+
+// ============================================================
+// VOTANTES — lista filtrada por intenção de voto, separada do Cadastro
+// completo, pra facilitar quando for a hora de mandar mensagem em massa
+// (manual, um a um, pelo link do WhatsApp).
+// ============================================================
+let filtroVotantesAtual = 'SIM';
+
+async function renderVotantes(){
+  const c = document.getElementById('conteudo');
+  c.innerHTML = '<div class="topo-pagina"><div><h2>Lista de <span class="destaque">Votantes</span></h2></div></div><p style="color:#9FB3A6;">Carregando...</p>';
+  pessoasCache = await listarColecaoSimples('pessoas');
+  desenharVotantes();
+}
+
+function desenharVotantes(filtroTexto){
+  const c = document.getElementById('conteudo');
+
+  const votosSim = pessoasCache.filter(p=>p.intencaoVoto==='SIM');
+  const votosIndeciso = pessoasCache.filter(p=>p.intencaoVoto==='INDECISO');
+  const votosNao = pessoasCache.filter(p=>p.intencaoVoto==='NAO');
+
+  const abas = [
+    { valor:'SIM', label:'✅ Vão votar', lista:votosSim },
+    { valor:'INDECISO', label:'🤔 Indecisos', lista:votosIndeciso },
+    { valor:'NAO', label:'❌ Não vão votar', lista:votosNao }
+  ];
+
+  let lista = abas.find(a=>a.valor===filtroVotantesAtual).lista;
+  if(filtroTexto){
+    const f = normalizarTexto(filtroTexto);
+    lista = lista.filter(p=>normalizarTexto(p.nome).includes(f) || normalizarTexto(p.bairro).includes(f));
+  }
+
+  c.innerHTML = `
+    <div class="topo-pagina">
+      <div class="cabecalho-titulo">
+        <h2>Lista de <span class="destaque">Votantes</span></h2>
+        <p>Filtrada por intenção de voto — use pra organizar contato futuro.</p>
+      </div>
+      <div class="kpis-mini-row">
+        ${kpiMini('rgba(22,163,74,.18)','#3FD17D','✅',votosSim.length,'Vão Votar')}
+        ${kpiMini('rgba(232,174,0,.18)','#F2C43D','🤔',votosIndeciso.length,'Indecisos')}
+        ${kpiMini('rgba(229,72,77,.18)','#FF8E92','❌',votosNao.length,'Não Vão Votar')}
+      </div>
+    </div>
+
+    <div class="seletor-intencao" style="max-width:520px;margin-bottom:16px;">
+      ${abas.map(a=>`<button type="button" class="opcao-intencao ${filtroVotantesAtual===a.valor?'selecionada':''}" onclick="window.mudarFiltroVotantes('${a.valor}')"><span class="icone-intencao">${a.label.split(' ')[0]}</span><span>${a.label.split(' ').slice(1).join(' ')} (${a.lista.length})</span></button>`).join('')}
+    </div>
+
+    <div class="barra-acoes">
+      <input id="fTextoVotantes" placeholder="Buscar nome ou bairro..." value="${filtroTexto||''}" oninput="window.filtrarVotantes()">
+      <button class="btn-secundario" onclick="window.irPara('votantes')">↻ Atualizar</button>
+    </div>
+
+    <div class="tabela-box">
+      <table>
+        <thead><tr><th>Nome</th><th>Telefone</th><th>Bairro</th></tr></thead>
+        <tbody>
+          ${lista.map(p=>`
+            <tr>
+              <td>${p.nome||''}</td><td>${linkWhatsapp(p.telefone)}</td><td>${p.bairro||''}</td>
+            </tr>`).join('') || `<tr><td colspan="3" style="text-align:center;color:#5E7368;padding:20px;">Ninguém nessa lista ainda.</td></tr>`}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+window.mudarFiltroVotantes = function(valor){
+  filtroVotantesAtual = valor;
+  desenharVotantes();
+};
+
+window.filtrarVotantes = function(){
+  desenharVotantes(document.getElementById('fTextoVotantes').value);
 };
 
 window.abrirModalPessoa = function(registro){
