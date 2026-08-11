@@ -230,6 +230,8 @@
   .dia-agenda.selecionado{background:var(--verde-escuro);border-color:var(--limao);}
   .num-dia-agenda{font-size:clamp(10px,1.4vw,12.5px);font-weight:700;color:var(--texto);}
   .pontos-dia-agenda{display:flex;gap:2px;margin-top:auto;flex-wrap:wrap;align-items:center;}
+  .mini-eventos-dia{margin-top:auto;display:flex;flex-direction:column;gap:1px;overflow:hidden;}
+  .mini-evento-texto{font-size:clamp(6px,1vw,8px);font-weight:700;color:var(--verde-escuro);background:var(--limao);padding:1px 4px;border-radius:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.5;}
   .ponto-evento{width:5px;height:5px;border-radius:50%;background:var(--limao);display:inline-block;flex-shrink:0;}
   .mais-pontos{font-size:7.5px;color:var(--texto-fraco);font-weight:700;}
   .agenda-lateral h3{margin:0 0 12px;font-size:14px;color:#fff;font-weight:800;flex:0 0 auto;}
@@ -1198,11 +1200,14 @@ function desenharAgenda(){
     celulas += `
       <div class="dia-agenda ${ehHoje?'hoje':''} ${ehSelecionado?'selecionado':''}" onclick="window.selecionarDiaAgenda(${dia})">
         <div class="num-dia-agenda">${dia}</div>
-        ${evs.length ? `<div class="pontos-dia-agenda">${evs.slice(0,3).map(()=>'<span class="ponto-evento"></span>').join('')}${evs.length>3?'<span class="mais-pontos">+'+(evs.length-3)+'</span>':''}</div>` : ''}
+        ${evs.length ? `<div class="mini-eventos-dia">
+          <div class="mini-evento-texto" title="${(evs[0].titulo||'').replace(/"/g,'&quot;')}">${evs[0].titulo||''}</div>
+          ${evs.length>1 ? `<span class="mais-pontos">+${evs.length-1}</span>` : ''}
+        </div>` : ''}
       </div>`;
   }
 
-  const botaoNovo = somenteLeitura() ? '' : `<button class="btn-primario" onclick="window.abrirModalEvento(null,'${agendaDiaSelecionado?chaveDataAgenda(agendaDiaSelecionado,agendaMes,agendaAno):''}')">+ Novo Compromisso</button>`;
+  const botaoNovo = somenteLeitura() ? '' : `<button class="btn-primario" onclick="window.abrirNovoCompromisso()">+ Novo Compromisso</button>`;
 
   c.innerHTML = `
     <div class="topo-pagina">
@@ -1275,6 +1280,14 @@ window.selecionarDiaAgenda = function(dia){
 };
 window.mudarMesAgenda = mudarMesAgenda;
 window.irParaHojeAgenda = irParaHojeAgenda;
+
+// Lê o dia selecionado NA HORA do clique (não no momento em que a tela foi
+// desenhada) — corrige o bug de sempre abrir com a data de hoje mesmo depois
+// de clicar em outro dia do calendário.
+window.abrirNovoCompromisso = function(){
+  const dataPreSelecionada = agendaDiaSelecionado ? chaveDataAgenda(agendaDiaSelecionado, agendaMes, agendaAno) : '';
+  window.abrirModalEvento(null, dataPreSelecionada);
+};
 
 window.abrirModalEvento = function(registro, dataPreSelecionada){
   registro = registro || {};
