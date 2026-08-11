@@ -142,6 +142,9 @@
   .btn-primario:hover{filter:brightness(1.08);}
   .btn-secundario{background:var(--superficie-2);border:1px solid var(--borda);color:var(--texto);padding:10px 14px;border-radius:var(--raio-s);cursor:pointer;font-size:12.5px;font-family:inherit;font-weight:600;}
   .btn-secundario:hover{border-color:var(--limao);color:var(--limao);}
+  .btn-perigo{background:rgba(229,72,77,.12);border:1px solid rgba(229,72,77,.4);color:#FF8E92;padding:10px 14px;border-radius:var(--raio-s);cursor:pointer;font-size:12.5px;font-family:inherit;font-weight:600;}
+  .btn-perigo:hover{background:#E5484D;color:#fff;border-color:#E5484D;}
+  .grupo-acoes-tabela{display:flex;gap:6px;}
 
   /* ---------- KPIs ---------- */
   .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:24px;}
@@ -876,7 +879,7 @@ function filtrarAtendimentos(){
       <td>${badgeStatus(a.status)}</td>
       <td>${a.responsavel||''}</td>
       <td>${a.qtdAnexos ? '📎 '+a.qtdAnexos : '—'}</td>
-      ${somenteLeitura() ? '' : `<td><button class="btn-secundario" onclick='window.abrirModalAtendimento(${JSON.stringify(a)})'>Editar</button></td>`}
+      ${somenteLeitura() ? '' : `<td><div class="grupo-acoes-tabela"><button class="btn-secundario" onclick='window.abrirModalAtendimento(${JSON.stringify(a)})'>Editar</button><button class="btn-perigo" onclick="window.excluirAtendimento('${a.id}')">Excluir</button></div></td>`}
     </tr>
   `).join('') || `<tr><td colspan="9" style="text-align:center;color:#5E7368;padding:20px;">Nenhum atendimento encontrado.</td></tr>`;
 }
@@ -910,6 +913,16 @@ window.abrirModalAtendimento = function(registro){
     </div>`;
   document.body.appendChild(fundo);
   ligarBuscaPessoa('m', { nome:'m_nome', telefone:'m_telefone', endereco:'m_endereco', bairro:'m_bairro' });
+};
+
+window.excluirAtendimento = async function(id){
+  if(!confirm('Excluir este atendimento? Essa ação não pode ser desfeita.')) return;
+  try{
+    await deleteDoc(doc(db,'atendimentos',id));
+    renderAtendimentos();
+  }catch(erro){
+    alert('Não foi possível excluir. ('+erro.message+')');
+  }
 };
 
 window.salvarAtendimento = async function(id){
@@ -962,7 +975,7 @@ function desenharTransportes(){
               <td>${t.nome||''}</td><td>${t.data||''}</td><td>${t.horario||''}</td>
               <td>${t.hospital||''}</td><td>${linkWhatsapp(t.contato)}</td>
               <td>${badgeStatus(t.confirmado)}</td>
-              ${somenteLeitura() ? '' : `<td><button class="btn-secundario" onclick='window.abrirModalTransporte(${JSON.stringify(t)})'>Editar</button></td>`}
+              ${somenteLeitura() ? '' : `<td><div class="grupo-acoes-tabela"><button class="btn-secundario" onclick='window.abrirModalTransporte(${JSON.stringify(t)})'>Editar</button><button class="btn-perigo" onclick="window.excluirTransporte('${t.id}')">Excluir</button></div></td>`}
             </tr>`).join('') || `<tr><td colspan="7" style="text-align:center;color:#5E7368;padding:20px;">Nenhuma solicitação ainda.</td></tr>`}
         </tbody>
       </table>
@@ -994,6 +1007,16 @@ window.abrirModalTransporte = function(registro){
     </div>`;
   document.body.appendChild(fundo);
   ligarBuscaPessoa('t', { nome:'t_nome', telefone:'t_contato' });
+};
+
+window.excluirTransporte = async function(id){
+  if(!confirm('Excluir esta solicitação de transporte? Essa ação não pode ser desfeita.')) return;
+  try{
+    await deleteDoc(doc(db,'transportes',id));
+    renderTransportes();
+  }catch(erro){
+    alert('Não foi possível excluir. ('+erro.message+')');
+  }
 };
 
 window.salvarTransporte = async function(id){
@@ -1057,7 +1080,7 @@ function desenharEquipamentos(){
             <tr>
               <td>${e.nome||''}</td><td>${e.equipamento||''}</td><td>${linkWhatsapp(e.contato)}</td>
               <td>${badgeStatus(e.devolucao)}</td>
-              ${somenteLeitura() ? '' : `<td><button class="btn-secundario" onclick='window.abrirModalEquipamento(${JSON.stringify(e)})'>Editar</button></td>`}
+              ${somenteLeitura() ? '' : `<td><div class="grupo-acoes-tabela"><button class="btn-secundario" onclick='window.abrirModalEquipamento(${JSON.stringify(e)})'>Editar</button><button class="btn-perigo" onclick="window.excluirEquipamento('${e.id}')">Excluir</button></div></td>`}
             </tr>`).join('') || `<tr><td colspan="5" style="text-align:center;color:#5E7368;padding:20px;">Nenhum empréstimo ainda.</td></tr>`}
         </tbody>
       </table>
@@ -1087,6 +1110,16 @@ window.abrirModalEquipamento = function(registro){
     </div>`;
   document.body.appendChild(fundo);
   ligarBuscaPessoa('e', { nome:'e_nome', telefone:'e_contato' });
+};
+
+window.excluirEquipamento = async function(id){
+  if(!confirm('Excluir este empréstimo? Essa ação não pode ser desfeita.')) return;
+  try{
+    await deleteDoc(doc(db,'equipamentos',id));
+    renderEquipamentos();
+  }catch(erro){
+    alert('Não foi possível excluir. ('+erro.message+')');
+  }
 };
 
 window.salvarEquipamento = async function(id){
@@ -1337,7 +1370,7 @@ function desenharEventos(){
             <tr>
               <td>${ev.data||''}</td><td>${ev.titulo||''}</td><td>${ev.local||''}</td>
               <td>${badgeStatus(ev.status)}</td>
-              ${somenteLeitura() ? '' : `<td><button class="btn-secundario" onclick='window.abrirModalEvt(${JSON.stringify(ev)})'>Editar</button></td>`}
+              ${somenteLeitura() ? '' : `<td><div class="grupo-acoes-tabela"><button class="btn-secundario" onclick='window.abrirModalEvt(${JSON.stringify(ev)})'>Editar</button><button class="btn-perigo" onclick="window.excluirEvt('${ev.id}')">Excluir</button></div></td>`}
             </tr>`).join('') || `<tr><td colspan="5" style="text-align:center;color:#5E7368;padding:20px;">Nenhum evento cadastrado ainda.</td></tr>`}
         </tbody>
       </table>
@@ -1366,6 +1399,16 @@ window.abrirModalEvt = function(registro){
       </div>
     </div>`;
   document.body.appendChild(fundo);
+};
+
+window.excluirEvt = async function(id){
+  if(!confirm('Excluir este evento? Essa ação não pode ser desfeita.')) return;
+  try{
+    await deleteDoc(doc(db,'eventos',id));
+    renderEventos();
+  }catch(erro){
+    alert('Não foi possível excluir. ('+erro.message+')');
+  }
 };
 
 window.salvarEvt = async function(id){
@@ -1480,7 +1523,7 @@ function desenharPessoas(filtroTexto){
             <tr>
               <td>${p.nome||''}</td><td>${p.cpf||'-'}</td><td>${linkWhatsapp(p.telefone)}</td><td>${p.bairro||''}</td><td>${p.dataNascimento||'-'}</td>
               <td>${badgeIntencao(p.intencaoVoto)}</td>
-              ${somenteLeitura() ? '' : `<td><button class="btn-secundario" onclick='window.abrirModalPessoa(${JSON.stringify(p)})'>Editar</button></td>`}
+              ${somenteLeitura() ? '' : `<td><div class="grupo-acoes-tabela"><button class="btn-secundario" onclick='window.abrirModalPessoa(${JSON.stringify(p)})'>Editar</button><button class="btn-perigo" onclick="window.excluirPessoa('${p.id}')">Excluir</button></div></td>`}
             </tr>`).join('') || `<tr><td colspan="7" style="text-align:center;color:#5E7368;padding:20px;">${filtroTexto ? 'Nenhum resultado.' : 'Nenhuma pessoa cadastrada ainda.'}</td></tr>`}
         </tbody>
       </table>
@@ -1638,6 +1681,17 @@ window.marcarIntencaoVoto = function(valor, apenasAplicarSemAlternar){
   document.querySelectorAll('.opcao-intencao').forEach(btn=>{
     btn.classList.toggle('selecionada', btn.dataset.valor === novoValor && novoValor !== '');
   });
+};
+
+window.excluirPessoa = async function(id){
+  if(!confirm('Excluir esta pessoa do cadastro? Essa ação não pode ser desfeita. Atendimentos/transportes/equipamentos já registrados NÃO são apagados.')) return;
+  try{
+    await deleteDoc(doc(db,'pessoas',id));
+    pessoasCache = await listarColecaoSimples('pessoas');
+    if(paginaAtual==='votantes') desenharVotantes(); else desenharPessoas();
+  }catch(erro){
+    alert('Não foi possível excluir. ('+erro.message+')');
+  }
 };
 
 window.salvarPessoa = async function(id){
@@ -1876,7 +1930,7 @@ function desenharUsuarios(){
             <tr>
               <td>${u.nome||''}</td><td>${u.email||''}</td><td>${rotuloCargo(normalizarTexto(u.cargo))}</td>
               <td>${u.ativo===false ? '<span class="badge CANCELADO">BLOQUEADO</span>' : '<span class="badge CONCLUIDO">ATIVO</span>'}</td>
-              <td><button class="btn-secundario" onclick='window.abrirModalUsuario(${JSON.stringify(u)})'>Editar</button></td>
+              <td><div class="grupo-acoes-tabela"><button class="btn-secundario" onclick='window.abrirModalUsuario(${JSON.stringify(u)})'>Editar</button>${u.id===USUARIO.uid ? '' : `<button class="btn-perigo" onclick="window.excluirUsuario('${u.id}')">Excluir</button>`}</div></td>
             </tr>`).join('') || `<tr><td colspan="5" style="text-align:center;color:#5E7368;padding:20px;">Nenhum perfil cadastrado.</td></tr>`}
         </tbody>
       </table>
@@ -1920,6 +1974,17 @@ window.abrirModalUsuario = function(registro){
       </div>
     </div>`;
   document.body.appendChild(fundo);
+};
+
+window.excluirUsuario = async function(id){
+  if(id === USUARIO.uid){ alert('Você não pode excluir o seu próprio perfil.'); return; }
+  if(!confirm('Excluir este perfil? A pessoa perde acesso ao sistema na hora. (O login dela continua existindo no Firebase Authentication — se quiser apagar de vez, remova também por lá.)')) return;
+  try{
+    await deleteDoc(doc(db,'usuarios',id));
+    renderUsuarios();
+  }catch(erro){
+    alert('Não foi possível excluir. ('+erro.message+')');
+  }
 };
 
 window.salvarUsuario = async function(id){
