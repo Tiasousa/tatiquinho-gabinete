@@ -72,7 +72,7 @@
 
   /* ---------- SHELL ---------- */
   #app{display:flex;flex-direction:column;height:100vh;width:100%;}
-  header.topo-app{background:var(--superficie);border-bottom:1px solid var(--borda);flex-shrink:0;}
+  header.topo-app{background:var(--superficie);border-bottom:1px solid var(--borda);flex-shrink:0;padding-top:env(safe-area-inset-top, 0px);}
   .topo-linha1{display:flex;align-items:center;gap:18px;padding:14px 28px;}
   .logo-topo h1{font-size:22px;font-weight:900;margin:0;color:#fff;text-transform:uppercase;line-height:.9;}
   .logo-topo .arroba{font-size:9.5px;color:var(--texto-suave);letter-spacing:1px;}
@@ -196,8 +196,12 @@
   }
 
   @media(max-width:760px){
-    .topo-linha1{padding:12px 16px;flex-wrap:wrap;}
+    .topo-linha1{padding:10px 14px;flex-wrap:nowrap;gap:10px;}
     .saudacao-bloco{display:none;}
+    .perfil-texto{display:none;}
+    .logo-topo .arroba{display:none;}
+    .logo-topo h1{font-size:17px;}
+    .topo-direita{gap:8px;}
     main{padding:16px;}
     .modal-grid{grid-template-columns:1fr;}
     .kpis{grid-template-columns:1fr 1fr;}
