@@ -220,8 +220,8 @@
   .btn-nav-mes{background:var(--superficie-2);border:1px solid var(--borda);color:var(--texto);width:28px;height:28px;border-radius:8px;cursor:pointer;font-size:15px;line-height:1;flex-shrink:0;}
   .btn-nav-mes:hover{border-color:var(--limao);color:var(--limao);}
   .agenda-cabecalho-dias{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;font-size:clamp(8px,1.6vw,10px);color:var(--texto-fraco);font-weight:800;letter-spacing:.4px;margin-bottom:6px;flex:0 0 auto;}
-  .agenda-grade{display:grid;grid-template-columns:repeat(7,1fr);grid-auto-rows:minmax(0,1fr);gap:4px;flex:1;min-height:0;}
-  .dia-agenda{border:1px solid var(--borda);border-radius:8px;padding:4px 6px;cursor:pointer;transition:border-color .15s ease,background .15s ease;min-height:0;overflow:hidden;display:flex;flex-direction:column;}
+  .agenda-grade{display:grid;grid-template-columns:repeat(7,1fr);grid-auto-rows:minmax(52px,1fr);gap:4px;flex:1;min-height:0;overflow-y:auto;}
+  .dia-agenda{border:1px solid var(--borda);border-radius:8px;padding:4px 5px;cursor:pointer;transition:border-color .15s ease,background .15s ease;min-height:44px;overflow:hidden;display:flex;flex-direction:column;}
   .dia-agenda:hover{border-color:var(--limao);}
   .dia-agenda.vazio{border:none;cursor:default;}
   .dia-agenda.vazio:hover{border-color:transparent;}
@@ -230,8 +230,9 @@
   .dia-agenda.selecionado{background:var(--verde-escuro);border-color:var(--limao);}
   .num-dia-agenda{font-size:clamp(10px,1.4vw,12.5px);font-weight:700;color:var(--texto);}
   .pontos-dia-agenda{display:flex;gap:2px;margin-top:auto;flex-wrap:wrap;align-items:center;}
-  .mini-eventos-dia{margin-top:auto;display:flex;flex-direction:column;gap:1px;overflow:hidden;}
-  .mini-evento-texto{font-size:clamp(6px,1vw,8px);font-weight:700;color:var(--verde-escuro);background:var(--limao);padding:1px 4px;border-radius:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.5;}
+  .mini-eventos-dia{margin-top:3px;display:flex;flex-direction:column;gap:2px;overflow:hidden;}
+  .mini-evento-texto{font-size:clamp(8px,1.3vw,10.5px);font-weight:700;color:var(--verde-escuro);background:var(--limao);padding:2px 6px;border-radius:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.6;}
+  .mais-eventos-mini{font-size:clamp(7px,1.1vw,9px);color:var(--texto-fraco);font-weight:700;padding-left:2px;}
   .ponto-evento{width:5px;height:5px;border-radius:50%;background:var(--limao);display:inline-block;flex-shrink:0;}
   .mais-pontos{font-size:7.5px;color:var(--texto-fraco);font-weight:700;}
   .agenda-lateral h3{margin:0 0 12px;font-size:14px;color:#fff;font-weight:800;flex:0 0 auto;}
@@ -1202,7 +1203,7 @@ function desenharAgenda(){
         <div class="num-dia-agenda">${dia}</div>
         ${evs.length ? `<div class="mini-eventos-dia">
           <div class="mini-evento-texto" title="${(evs[0].titulo||'').replace(/"/g,'&quot;')}">${evs[0].titulo||''}</div>
-          ${evs.length>1 ? `<span class="mais-pontos">+${evs.length-1}</span>` : ''}
+          ${evs.length>1 ? `<span class="mais-eventos-mini">+${evs.length-1} compromisso${evs.length>2?'s':''}</span>` : ''}
         </div>` : ''}
       </div>`;
   }
