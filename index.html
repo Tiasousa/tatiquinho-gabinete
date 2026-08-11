@@ -306,7 +306,7 @@ async function carregarTiposConfiguraveis(){
 function normalizarTexto(txt){
   return String(txt||'').trim().toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
 }
-function somenteLeitura(){ return normalizarTexto(USUARIO && USUARIO.cargo) === 'VEREADOR'; }
+function somenteLeitura(){ return false; } // Vereador agora tem os mesmos acessos de escrita que Assessor
 function iniciaisNome(nome){
   if(!nome) return '?';
   const p = nome.trim().split(' ');
