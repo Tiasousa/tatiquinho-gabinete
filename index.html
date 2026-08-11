@@ -382,6 +382,22 @@ function kpiMini(corFundo, corTexto, icone, numero, rotulo){
 }
 // telefone clicável -> abre WhatsApp direto (wa.me). Não é disparo em massa,
 // é 1 clique = 1 conversa aberta manualmente, sem custo e sem risco de banimento.
+// Formata o campo de horário enquanto a pessoa digita: só números,
+// insere os dois pontos sozinho (ex: digitar 1400 vira 14:00), e trava
+// em valores válidos (hora até 23, minuto até 59).
+window.formatarHorario = function(input){
+  let digitos = input.value.replace(/\D/g,'').slice(0,4);
+  if(digitos.length >= 2){
+    let hh = digitos.slice(0,2);
+    if(Number(hh) > 23) hh = '23';
+    let mm = digitos.slice(2,4);
+    if(mm.length === 2 && Number(mm) > 59) mm = '59';
+    input.value = digitos.length > 2 ? hh+':'+mm : hh;
+  } else {
+    input.value = digitos;
+  }
+};
+
 function linkWhatsapp(telefone){
   if(!telefone) return '-';
   const numeros = String(telefone).replace(/\D/g,'');
@@ -998,7 +1014,7 @@ window.abrirModalTransporte = function(registro){
         ${campoBuscaPessoa('t')}
         <div><label>Nome</label><input id="t_nome" value="${registro.nome||''}"></div>
         <div><label>Data</label><input id="t_data" value="${registro.data||''}" placeholder="dd/mm/aaaa"></div>
-        <div><label>Horário</label><input id="t_horario" value="${registro.horario||''}" placeholder="hh:mm"></div>
+        <div><label>Horário</label><input id="t_horario" value="${registro.horario||''}" placeholder="hh:mm" inputmode="numeric" maxlength="5" oninput="window.formatarHorario(this)"></div>
         <div><label>Hospital</label><input id="t_hospital" value="${registro.hospital||''}"></div>
         <div><label>Contato</label><input id="t_contato" value="${registro.contato||''}"></div>
         <div><label>Confirmado</label><select id="t_confirmado"><option ${registro.confirmado==='SIM'?'selected':''}>SIM</option><option ${registro.confirmado==='NAO'?'selected':''}>NAO</option></select></div>
@@ -1301,15 +1317,31 @@ window.abrirModalEvento = function(registro, dataPreSelecionada){
       <div class="modal-grid">
         <div class="campo-2"><label>Título</label><input id="ev_titulo" value="${registro.titulo||''}" placeholder="Ex: Reunião com secretaria"></div>
         <div><label>Data</label><input id="ev_data" value="${registro.data||dataPreSelecionada||''}" placeholder="dd/mm/aaaa"></div>
-        <div><label>Horário</label><input id="ev_hora" value="${registro.horaInicio||''}" placeholder="hh:mm"></div>
+        <div><label>Horário</label><input id="ev_hora" value="${registro.horaInicio||''}" placeholder="hh:mm" inputmode="numeric" maxlength="5" oninput="window.formatarHorario(this)"></div>
         <div class="campo-2"><label>Descrição</label><textarea id="ev_desc" rows="3">${registro.descricao||''}</textarea></div>
       </div>
-      <div class="modal-acoes">
-        <button class="btn-secundario" onclick="this.closest('.modal-fundo').remove()">Cancelar</button>
-        ${somenteLeitura() ? '' : `<button class="btn-primario" onclick="window.salvarEvento('${registro.id||''}')">Salvar</button>`}
+      <div class="modal-acoes" style="justify-content:space-between;">
+        <div>${registro.id && !somenteLeitura() ? `<button class="btn-perigo" onclick="window.excluirEvento('${registro.id}')">Excluir</button>` : ''}</div>
+        <div style="display:flex;gap:10px;">
+          <button class="btn-secundario" onclick="this.closest('.modal-fundo').remove()">Cancelar</button>
+          ${somenteLeitura() ? '' : `<button class="btn-primario" onclick="window.salvarEvento('${registro.id||''}')">Salvar</button>`}
+        </div>
       </div>
     </div>`;
   document.body.appendChild(fundo);
+};
+
+window.excluirEvento = async function(id){
+  if(!confirm('Excluir este compromisso? Essa ação não pode ser desfeita.')) return;
+  try{
+    await deleteDoc(doc(db,'agendaEventos',id));
+    const modal = document.querySelector('.modal-fundo');
+    if(modal) modal.remove();
+    agendaCache = await listarColecao('agendaEventos');
+    desenharAgenda();
+  }catch(erro){
+    alert('Não foi possível excluir. ('+erro.message+')');
+  }
 };
 
 window.salvarEvento = async function(id){
