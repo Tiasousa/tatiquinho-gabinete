@@ -57,8 +57,39 @@
 
   /* ---------- LOGIN ---------- */
   #telaLogin{height:100vh;display:flex;align-items:center;justify-content:center;background:
-    radial-gradient(circle at 50% 0%, rgba(168,217,72,.10), transparent 45%), var(--preto);}
-  .card-login{background:var(--superficie);border:1px solid var(--borda);padding:44px 38px;border-radius:var(--raio-l);width:380px;max-width:92vw;box-shadow:0 40px 90px rgba(0,0,0,.5);animation:entra .35s ease both;}
+    radial-gradient(circle at 50% 0%, rgba(168,217,72,.10), transparent 45%), var(--preto);perspective:1200px;}
+  .card-login{
+    position:relative;
+    background:linear-gradient(160deg, rgba(22,36,27,.96), rgba(6,9,7,.98));
+    border:1px solid rgba(168,217,72,.14);
+    padding:44px 38px;border-radius:var(--raio-l);width:380px;max-width:92vw;
+    box-shadow:
+      0 2px 4px rgba(0,0,0,.35),
+      0 14px 28px rgba(0,0,0,.4),
+      0 50px 100px rgba(0,0,0,.6),
+      inset 0 1px 0 rgba(255,255,255,.07);
+    animation:entra .35s ease both;
+    transform-style:preserve-3d;
+    transition:transform .18s ease-out, box-shadow .18s ease-out;
+    will-change:transform;
+  }
+  .card-login::before{
+    content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+    background:linear-gradient(180deg, rgba(255,255,255,.07), transparent 45%);
+  }
+  .card-login::after{
+    content:'';position:absolute;inset:-1px;border-radius:inherit;pointer-events:none;z-index:-1;
+    background:linear-gradient(135deg, rgba(168,217,72,.55), transparent 32%, transparent 68%, rgba(111,191,62,.5));
+    padding:1px;
+    -webkit-mask:linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite:xor;
+    mask-composite:exclude;
+  }
+  .card-login.tilt-ativo{box-shadow:
+      0 4px 8px rgba(0,0,0,.4),
+      0 22px 40px rgba(0,0,0,.5),
+      0 60px 120px rgba(0,0,0,.65),
+      inset 0 1px 0 rgba(255,255,255,.09);}
   .card-login .marca{text-align:center;margin-bottom:22px;}
   .card-login .marca .arroba{color:var(--texto-suave);font-size:12px;letter-spacing:1px;margin-bottom:6px;}
   .card-login .marca h1{font-size:42px;font-weight:900;margin:0;line-height:.9;color:#fff;text-transform:uppercase;}
@@ -363,6 +394,28 @@ function diasAteProximoAniversario(dataNascimento){
 // ---------------- LOGIN ----------------
 document.getElementById('inputUsuario').addEventListener('keydown', e=>{ if(e.key==='Enter') fazerLogin(); });
 document.getElementById('inputSenha').addEventListener('keydown', e=>{ if(e.key==='Enter') fazerLogin(); });
+
+// Efeito 3D no card de login, seguindo o cursor — só em telas com mouse de
+// verdade (hover + pointer fino). No celular fica só a profundidade estática
+// (sombras em camadas), sem "tilt", porque não faz sentido no toque.
+if(window.matchMedia('(hover: hover) and (pointer: fine)').matches){
+  const cardLogin = document.querySelector('.card-login');
+  if(cardLogin){
+    cardLogin.addEventListener('mousemove', (ev)=>{
+      const rect = cardLogin.getBoundingClientRect();
+      const x = (ev.clientX - rect.left) / rect.width - 0.5;
+      const y = (ev.clientY - rect.top) / rect.height - 0.5;
+      const rotY = x * 10;
+      const rotX = y * -10;
+      cardLogin.style.transform = `rotateX(${rotX}deg) rotateY(${rotY}deg) scale(1.015)`;
+      cardLogin.classList.add('tilt-ativo');
+    });
+    cardLogin.addEventListener('mouseleave', ()=>{
+      cardLogin.style.transform = 'rotateX(0deg) rotateY(0deg) scale(1)';
+      cardLogin.classList.remove('tilt-ativo');
+    });
+  }
+}
 
 async function fazerLogin(){
   const email = document.getElementById('inputUsuario').value.trim();
