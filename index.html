@@ -185,6 +185,16 @@
   .modal-acoes{display:flex;justify-content:flex-end;gap:10px;margin-top:22px;}
   .aviso-perfil{background:rgba(232,174,0,.12);border:1px solid rgba(232,174,0,.35);color:#F2C43D;padding:11px 15px;border-radius:var(--raio-s);font-size:12px;margin-bottom:16px;}
   .resultados-busca-pessoa{position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--preto-suave);border:1px solid var(--limao);border-radius:var(--raio-s);max-height:220px;overflow-y:auto;z-index:30;box-shadow:0 12px 30px rgba(0,0,0,.5);}
+  .seletor-intencao{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+  .opcao-intencao{display:flex;flex-direction:column;align-items:center;gap:5px;padding:12px 8px;border:1.5px solid var(--borda);border-radius:var(--raio-s);background:var(--preto-suave);color:var(--texto-suave);cursor:pointer;font-family:inherit;font-size:11px;font-weight:600;transition:border-color .15s ease,background .15s ease,color .15s ease;}
+  .opcao-intencao .icone-intencao{font-size:20px;}
+  .opcao-intencao:hover{border-color:var(--limao);}
+  .opcao-intencao.selecionada{border-color:var(--limao);background:var(--verde-escuro);color:#fff;}
+  .badge-intencao{padding:3px 9px;border-radius:20px;font-size:10.5px;font-weight:800;display:inline-flex;align-items:center;gap:4px;}
+  .badge-intencao.SIM{background:rgba(22,163,74,.18);color:#3FD17D;}
+  .badge-intencao.INDECISO{background:rgba(232,174,0,.18);color:#F2C43D;}
+  .badge-intencao.NAO{background:rgba(229,72,77,.18);color:#FF8E92;}
+  .badge-intencao.vazio{background:var(--superficie-2);color:var(--texto-fraco);}
   .item-resultado-pessoa{padding:9px 13px;cursor:pointer;border-bottom:1px solid var(--borda);display:flex;flex-direction:column;gap:2px;}
   .item-resultado-pessoa:last-child{border-bottom:none;}
   .item-resultado-pessoa:hover{background:var(--verde-escuro);}
@@ -507,7 +517,7 @@ function montarMenu(){
   const itens = [
     {id:'dashboard',label:'Dashboard'},
     {id:'eventos',label:'Eventos'},
-    {id:'pessoas',label:'Pessoas'},
+    {id:'pessoas',label:'Cadastro'},
     {id:'atendimentos',label:'Atendimentos'},
     {id:'transportes',label:'Transportes'},
     {id:'equipamentos',label:'Equipamentos'},
@@ -1385,9 +1395,14 @@ async function renderPessoas(){
   desenharPessoas();
 }
 
+let chartsPessoasAtivos = [];
+
 function desenharPessoas(filtroTexto){
   const c = document.getElementById('conteudo');
   const botaoNovo = somenteLeitura() ? '' : '<button class="btn-primario" onclick="window.abrirModalPessoa()">+ Nova Pessoa</button>';
+
+  chartsPessoasAtivos.forEach(ch=>{ try{ ch.destroy(); }catch(e){} });
+  chartsPessoasAtivos = [];
 
   const hoje = new Date();
   const total = pessoasCache.length;
@@ -1400,6 +1415,17 @@ function desenharPessoas(filtroTexto){
     return dm && dm.mes===hoje.getMonth()+1;
   }).length;
   const comEndereco = pessoasCache.filter(p=>p.bairro).length;
+
+  const votosSim = pessoasCache.filter(p=>p.intencaoVoto==='SIM').length;
+  const votosIndeciso = pessoasCache.filter(p=>p.intencaoVoto==='INDECISO').length;
+  const votosNao = pessoasCache.filter(p=>p.intencaoVoto==='NAO').length;
+  const votosNaoInformado = total - votosSim - votosIndeciso - votosNao;
+
+  function badgeIntencao(valor){
+    const mapa = { SIM:'✅ Vai votar', INDECISO:'🤔 Indeciso', NAO:'❌ Não vai votar' };
+    if(!valor || !mapa[valor]) return '<span class="badge-intencao vazio">Não informado</span>';
+    return `<span class="badge-intencao ${valor}">${mapa[valor]}</span>`;
+  }
 
   let lista = pessoasCache;
   if(filtroTexto){
@@ -1427,23 +1453,52 @@ function desenharPessoas(filtroTexto){
       </div>
       ${botaoNovo}
     </div>
+
+    <div class="graficos-dashboard-grid">
+      <div class="agenda-box" style="height:auto;">
+        <h3 style="margin:0 0 4px;font-size:15px;color:#fff;">🗳️ Estatística de Intenção de Voto</h3>
+        <p style="font-size:11px;color:var(--texto-suave);margin:0 0 12px;">Estimativa baseada só em quem já foi marcado — dado sensível, uso interno.</p>
+        <div style="position:relative;height:190px;">${total ? '<canvas id="chartIntencaoVoto"></canvas>' : '<p style="color:#5E7368;font-size:12px;">Cadastre pessoas pra ver a estatística.</p>'}</div>
+      </div>
+      <div class="agenda-box" style="height:auto;display:flex;flex-direction:column;justify-content:center;gap:12px;">
+        <div class="kpi-mini" style="min-width:0;"><div class="icone-kpi-mini" style="background:rgba(22,163,74,.18);color:#3FD17D;">✅</div><div><div class="num-kpi-mini">${votosSim}</div><div class="rot-kpi-mini">Vão Votar</div></div></div>
+        <div class="kpi-mini" style="min-width:0;"><div class="icone-kpi-mini" style="background:rgba(232,174,0,.18);color:#F2C43D;">🤔</div><div><div class="num-kpi-mini">${votosIndeciso}</div><div class="rot-kpi-mini">Indecisos</div></div></div>
+        <div class="kpi-mini" style="min-width:0;"><div class="icone-kpi-mini" style="background:rgba(229,72,77,.18);color:#FF8E92;">❌</div><div><div class="num-kpi-mini">${votosNao}</div><div class="rot-kpi-mini">Não Vão Votar</div></div></div>
+      </div>
+    </div>
+
     <div class="barra-acoes">
       <input id="fTextoPessoa" placeholder="Buscar por nome, bairro, CPF, RG ou título..." value="${filtroTexto||''}" oninput="window.filtrarPessoas()">
       <button class="btn-secundario" onclick="window.irPara('pessoas')">↻ Atualizar</button>
     </div>
     <div class="tabela-box">
       <table>
-        <thead><tr><th>Nome</th><th>CPF</th><th>Telefone</th><th>Bairro</th><th>Nascimento</th>${somenteLeitura()?'':'<th></th>'}</tr></thead>
+        <thead><tr><th>Nome</th><th>CPF</th><th>Telefone</th><th>Bairro</th><th>Nascimento</th><th>Intenção de Voto</th>${somenteLeitura()?'':'<th></th>'}</tr></thead>
         <tbody>
           ${lista.map(p=>`
             <tr>
               <td>${p.nome||''}</td><td>${p.cpf||'-'}</td><td>${linkWhatsapp(p.telefone)}</td><td>${p.bairro||''}</td><td>${p.dataNascimento||'-'}</td>
+              <td>${badgeIntencao(p.intencaoVoto)}</td>
               ${somenteLeitura() ? '' : `<td><button class="btn-secundario" onclick='window.abrirModalPessoa(${JSON.stringify(p)})'>Editar</button></td>`}
-            </tr>`).join('') || `<tr><td colspan="6" style="text-align:center;color:#5E7368;padding:20px;">${filtroTexto ? 'Nenhum resultado.' : 'Nenhuma pessoa cadastrada ainda.'}</td></tr>`}
+            </tr>`).join('') || `<tr><td colspan="7" style="text-align:center;color:#5E7368;padding:20px;">${filtroTexto ? 'Nenhum resultado.' : 'Nenhuma pessoa cadastrada ainda.'}</td></tr>`}
         </tbody>
       </table>
     </div>
   `;
+
+  if(total){
+    chartsPessoasAtivos.push(new Chart(document.getElementById('chartIntencaoVoto'), {
+      type:'doughnut',
+      data:{
+        labels:['Vão votar','Indecisos','Não vão votar','Não informado'],
+        datasets:[{ data:[votosSim, votosIndeciso, votosNao, votosNaoInformado], backgroundColor:['#3FD17D','#F2C43D','#FF6B70','#3A4A40'], borderWidth:0 }]
+      },
+      options:{
+        responsive:true, maintainAspectRatio:false, cutout:'60%',
+        plugins:{ legend:{ position:'bottom', labels:{ color:'#9FB3A6', boxWidth:9, boxHeight:9, padding:12, font:{size:10,weight:'600'} } } }
+      }
+    }));
+  }
 }
 
 window.filtrarPessoas = function(){
@@ -1467,6 +1522,21 @@ window.abrirModalPessoa = function(registro){
         <div class="campo-2"><label>Título de Eleitor n° (opcional)</label><input id="p_titulo" value="${registro.tituloEleitor||''}"></div>
         <div><label>Bairro</label><input id="p_bairro" value="${registro.bairro||''}"></div>
         <div><label>Endereço</label><input id="p_endereco" value="${registro.endereco||''}"></div>
+        <div class="campo-2">
+          <label>Intenção de voto</label>
+          <div class="seletor-intencao" id="p_intencaoWrap">
+            <button type="button" class="opcao-intencao" data-valor="SIM" onclick="window.marcarIntencaoVoto('SIM')">
+              <span class="icone-intencao">✅</span><span>Vai votar</span>
+            </button>
+            <button type="button" class="opcao-intencao" data-valor="INDECISO" onclick="window.marcarIntencaoVoto('INDECISO')">
+              <span class="icone-intencao">🤔</span><span>Indeciso</span>
+            </button>
+            <button type="button" class="opcao-intencao" data-valor="NAO" onclick="window.marcarIntencaoVoto('NAO')">
+              <span class="icone-intencao">❌</span><span>Não vai votar</span>
+            </button>
+          </div>
+          <input type="hidden" id="p_intencao" value="${registro.intencaoVoto||''}">
+        </div>
         <div class="campo-2"><label>Observações</label><textarea id="p_obs" rows="2">${registro.observacoes||''}</textarea></div>
       </div>
       <div class="modal-acoes">
@@ -1475,6 +1545,20 @@ window.abrirModalPessoa = function(registro){
       </div>
     </div>`;
   document.body.appendChild(fundo);
+  window.marcarIntencaoVoto(registro.intencaoVoto || '', true);
+};
+
+// Marca visualmente qual botão de intenção de voto está selecionado (toggle:
+// clicar de novo no mesmo desmarca, deixando "não informado").
+window.marcarIntencaoVoto = function(valor, apenasAplicarSemAlternar){
+  const campoOculto = document.getElementById('p_intencao');
+  if(!campoOculto) return;
+  const jaEstavaMarcado = campoOculto.value === valor;
+  const novoValor = (apenasAplicarSemAlternar || !jaEstavaMarcado) ? valor : '';
+  campoOculto.value = novoValor;
+  document.querySelectorAll('.opcao-intencao').forEach(btn=>{
+    btn.classList.toggle('selecionada', btn.dataset.valor === novoValor && novoValor !== '');
+  });
 };
 
 window.salvarPessoa = async function(id){
@@ -1487,6 +1571,7 @@ window.salvarPessoa = async function(id){
     tituloEleitor: document.getElementById('p_titulo').value.trim(),
     bairro: document.getElementById('p_bairro').value.trim(),
     endereco: document.getElementById('p_endereco').value.trim(),
+    intencaoVoto: document.getElementById('p_intencao').value,
     observacoes: document.getElementById('p_obs').value.trim()
   };
   if(!dados.nome){ alert('Preencha o nome.'); return; }
