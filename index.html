@@ -207,6 +207,18 @@
   .item-resultado-pessoa.sem-resultado:hover{background:none;}
   .lista-anexos-item{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--borda);font-size:12px;}
   .lista-anexos-item span{display:flex;gap:8px;}
+  .lista-anexos-item a{color:var(--limao);text-decoration:none;font-weight:600;}
+  .lista-anexos-item a:hover{text-decoration:underline;}
+  .anexo-upload{display:flex;align-items:center;gap:10px;margin-top:8px;}
+  .anexo-upload input[type=file]{flex:1;font-size:11.5px;color:var(--texto-suave);}
+
+  /* ---------- TOASTS ---------- */
+  .toast-container{position:fixed;top:16px;right:16px;z-index:200;display:flex;flex-direction:column;gap:8px;max-width:340px;}
+  .toast{background:var(--superficie);border:1px solid var(--borda);border-left:4px solid var(--limao);color:var(--texto);padding:12px 16px;border-radius:var(--raio-s);font-size:12.5px;font-weight:600;box-shadow:0 12px 30px rgba(0,0,0,.4);animation:entra .2s ease both;display:flex;align-items:flex-start;gap:10px;transition:opacity .25s ease,transform .25s ease;}
+  .toast.sucesso{border-left-color:var(--verde-vivo);}
+  .toast.erro{border-left-color:var(--alerta);}
+  .toast.aviso{border-left-color:var(--aviso);}
+  @media(max-width:760px){ .toast-container{left:12px;right:12px;top:12px;max-width:none;} }
 
   /* ---------- AGENDA (estilo calendário, sem rolagem, proporcional à tela) ---------- */
   main.modo-agenda{overflow:hidden;display:flex;flex-direction:column;}
@@ -303,6 +315,7 @@
   </header>
   <main id="conteudo"></main>
 </div>
+<div id="toastContainer" class="toast-container"></div>
 
 <!-- =========================================================
      PREENCHA AQUI a config do seu projeto Firebase
@@ -428,6 +441,67 @@ function diasAteProximoAniversario(dataNascimento){
   let proximo = new Date(hoje.getFullYear(), dm.mes-1, dm.dia);
   if(proximo < hoje) proximo = new Date(hoje.getFullYear()+1, dm.mes-1, dm.dia);
   return Math.round((proximo - hoje) / (1000*60*60*24));
+}
+
+// ---------------- TOASTS E CONFIRMAÇÃO (substituem alert/confirm nativos) ----------------
+function mostrarToast(mensagem, tipo){
+  tipo = tipo || 'info';
+  const container = document.getElementById('toastContainer');
+  if(!container) return;
+  const icones = { sucesso:'✅', erro:'⚠️', aviso:'⚠️', info:'ℹ️' };
+  const el = document.createElement('div');
+  el.className = 'toast '+tipo;
+  el.innerHTML = '<span>'+(icones[tipo]||icones.info)+'</span><span>'+mensagem+'</span>';
+  container.appendChild(el);
+  setTimeout(()=>{
+    el.style.opacity = '0';
+    el.style.transform = 'translateX(12px)';
+    setTimeout(()=>el.remove(), 250);
+  }, 4200);
+}
+
+// Substitui window.confirm por um modal no mesmo estilo do resto do app.
+// Retorna uma Promise<boolean> — use com await dentro das funções async.
+function confirmarAcao(mensagem, textoBotao){
+  return new Promise(resolve=>{
+    const fundo = document.createElement('div');
+    fundo.className = 'modal-fundo';
+    fundo.style.zIndex = 100;
+    fundo.innerHTML = `
+      <div class="modal" style="width:380px;" onclick="event.stopPropagation()">
+        <h3>Confirmar ação</h3>
+        <p style="font-size:13px;color:var(--texto-suave);line-height:1.5;margin:0 0 22px;">${mensagem}</p>
+        <div class="modal-acoes">
+          <button class="btn-secundario" id="btnConfirmarCancelar">Cancelar</button>
+          <button class="btn-perigo" id="btnConfirmarOk">${textoBotao||'Confirmar'}</button>
+        </div>
+      </div>`;
+    document.body.appendChild(fundo);
+    const finalizar = (valor)=>{ fundo.remove(); resolve(valor); };
+    fundo.onclick = (ev)=>{ if(ev.target===fundo) finalizar(false); };
+    fundo.querySelector('#btnConfirmarCancelar').onclick = ()=>finalizar(false);
+    fundo.querySelector('#btnConfirmarOk').onclick = ()=>finalizar(true);
+  });
+}
+
+// Exporta uma lista de objetos pra CSV (separador ";", padrão do Excel
+// em pt-BR) e dispara o download no navegador. colunas = [{chave,rotulo}].
+function exportarCSV(nomeArquivo, colunas, linhas){
+  if(!linhas.length){ mostrarToast('Não há dados para exportar.', 'aviso'); return; }
+  const escapar = (valor)=>'"'+String(valor==null?'':valor).replace(/"/g,'""')+'"';
+  const cabecalho = colunas.map(c=>escapar(c.rotulo)).join(';');
+  const corpo = linhas.map(linha=>colunas.map(c=>escapar(linha[c.chave])).join(';'));
+  const conteudo = '﻿'+[cabecalho, ...corpo].join('\r\n');
+  const blob = new Blob([conteudo], { type:'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = nomeArquivo;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+  mostrarToast('Arquivo '+nomeArquivo+' exportado!', 'sucesso');
 }
 
 // ---------------- LOGIN ----------------
@@ -829,6 +903,7 @@ async function renderDashboard(){
 // ATENDIMENTOS
 // ============================================================
 let atendimentosCache = [];
+let atendimentosFiltradosAtual = [];
 
 async function renderAtendimentos(){
   const c = document.getElementById('conteudo');
@@ -870,6 +945,7 @@ function desenharAtendimentos(){
         ${STATUS_ATENDIMENTO.map(s=>`<option>${s}</option>`).join('')}
       </select>
       <button class="btn-secundario" onclick="window.irPara('atendimentos')">↻ Atualizar</button>
+      <button class="btn-secundario" onclick="window.exportarAtendimentosCSV()">⬇ Exportar CSV</button>
     </div>
     <div class="tabela-box">
       <table>
@@ -887,6 +963,7 @@ function filtrarAtendimentos(){
   let linhas = atendimentosCache;
   if(texto) linhas = linhas.filter(a=>((a.nome||'')+' '+(a.bairro||'')).toLowerCase().includes(texto));
   if(status) linhas = linhas.filter(a=>normalizarTexto(a.status)===normalizarTexto(status));
+  atendimentosFiltradosAtual = linhas;
 
   document.getElementById('tbodyAtend').innerHTML = linhas.map(a=>`
     <tr>
@@ -906,6 +983,14 @@ function filtrarAtendimentos(){
 window.filtrarAtendimentos = filtrarAtendimentos;
 window.irPara = irPara;
 
+window.exportarAtendimentosCSV = function(){
+  exportarCSV('atendimentos.csv', [
+    {chave:'data', rotulo:'Data'}, {chave:'nome', rotulo:'Nome'}, {chave:'telefone', rotulo:'Telefone'},
+    {chave:'bairro', rotulo:'Bairro'}, {chave:'endereco', rotulo:'Endereço'}, {chave:'tipoAtendimento', rotulo:'Tipo'},
+    {chave:'status', rotulo:'Status'}, {chave:'responsavel', rotulo:'Responsável'}, {chave:'observacoes', rotulo:'Observações'}
+  ], atendimentosFiltradosAtual);
+};
+
 window.abrirModalAtendimento = function(registro){
   registro = registro || {};
   const fundo = document.createElement('div');
@@ -924,6 +1009,16 @@ window.abrirModalAtendimento = function(registro){
         <div><label>Status</label><select id="m_status">${STATUS_ATENDIMENTO.map(s=>`<option ${s===registro.status?'selected':''}>${s}</option>`).join('')}</select></div>
         <div><label>Responsável</label><input id="m_responsavel" value="${registro.responsavel||''}"></div>
         <div class="campo-2"><label>Observações</label><textarea id="m_obs" rows="3">${registro.observacoes||''}</textarea></div>
+        <div class="campo-2">
+          <label>Anexos (RG, laudo, comprovante...)</label>
+          ${registro.id ? `
+            <div id="listaAnexosAtend"></div>
+            ${somenteLeitura() ? '' : `<div class="anexo-upload">
+              <input type="file" id="inputAnexoAtend" multiple>
+              <button type="button" class="btn-secundario" onclick="window.enviarAnexosAtendimento('${registro.id}')">Enviar</button>
+            </div>`}
+          ` : `<p style="color:#5E7368;font-size:11.5px;margin:0;">Salve o atendimento primeiro pra poder anexar documentos.</p>`}
+        </div>
       </div>
       <div class="modal-acoes">
         <button class="btn-secundario" onclick="this.closest('.modal-fundo').remove()">Cancelar</button>
@@ -932,15 +1027,78 @@ window.abrirModalAtendimento = function(registro){
     </div>`;
   document.body.appendChild(fundo);
   ligarBuscaPessoa('m', { nome:'m_nome', telefone:'m_telefone', endereco:'m_endereco', bairro:'m_bairro' });
+  if(registro.id) renderizarListaAnexos(registro.id, registro.anexos||[]);
+};
+
+// Mostra a lista de anexos já enviados dentro do modal de Atendimento,
+// com link pra abrir cada um e botão de excluir.
+function renderizarListaAnexos(atendimentoId, anexos){
+  const container = document.getElementById('listaAnexosAtend');
+  if(!container) return;
+  if(!anexos || !anexos.length){
+    container.innerHTML = '<p style="color:#5E7368;font-size:11.5px;margin:0 0 8px;">Nenhum anexo enviado ainda.</p>';
+    return;
+  }
+  container.innerHTML = anexos.map((a,i)=>`
+    <div class="lista-anexos-item">
+      <span>📎 <a href="${a.url}" target="_blank" rel="noopener">${a.nome}</a></span>
+      ${somenteLeitura() ? '' : `<button class="btn-perigo" style="padding:4px 9px;font-size:10.5px;" onclick="window.excluirAnexoAtendimento('${atendimentoId}', ${i})">Excluir</button>`}
+    </div>`).join('');
+}
+
+window.enviarAnexosAtendimento = async function(atendimentoId){
+  const input = document.getElementById('inputAnexoAtend');
+  const arquivos = Array.from(input.files||[]);
+  if(!arquivos.length){ mostrarToast('Escolha ao menos um arquivo.', 'aviso'); return; }
+  try{
+    const snap = await getDoc(doc(db,'atendimentos',atendimentoId));
+    const anexosAtuais = (snap.exists() && snap.data().anexos) || [];
+    const novosAnexos = [];
+    for(const arquivo of arquivos){
+      const caminho = 'atendimentos/'+atendimentoId+'/'+Date.now()+'_'+arquivo.name;
+      const refArquivo = ref(storage, caminho);
+      await uploadBytes(refArquivo, arquivo);
+      const url = await getDownloadURL(refArquivo);
+      novosAnexos.push({ nome: arquivo.name, url, caminho });
+    }
+    const anexosFinal = anexosAtuais.concat(novosAnexos);
+    await updateDoc(doc(db,'atendimentos',atendimentoId), { anexos: anexosFinal, qtdAnexos: anexosFinal.length });
+    input.value = '';
+    renderizarListaAnexos(atendimentoId, anexosFinal);
+    mostrarToast('Anexo(s) enviado(s) com sucesso!', 'sucesso');
+    const idx = atendimentosCache.findIndex(a=>a.id===atendimentoId);
+    if(idx>-1){ atendimentosCache[idx].anexos = anexosFinal; atendimentosCache[idx].qtdAnexos = anexosFinal.length; }
+  }catch(erro){
+    mostrarToast('Não foi possível enviar o(s) anexo(s). ('+erro.message+')', 'erro');
+  }
+};
+
+window.excluirAnexoAtendimento = async function(atendimentoId, indice){
+  if(!(await confirmarAcao('Excluir este anexo? Essa ação não pode ser desfeita.', 'Excluir'))) return;
+  try{
+    const snap = await getDoc(doc(db,'atendimentos',atendimentoId));
+    const anexosAtuais = (snap.exists() && snap.data().anexos) || [];
+    const anexo = anexosAtuais[indice];
+    if(!anexo) return;
+    try{ await deleteObject(ref(storage, anexo.caminho)); }catch(erroStorage){}
+    const anexosFinal = anexosAtuais.filter((_,i)=>i!==indice);
+    await updateDoc(doc(db,'atendimentos',atendimentoId), { anexos: anexosFinal, qtdAnexos: anexosFinal.length });
+    renderizarListaAnexos(atendimentoId, anexosFinal);
+    mostrarToast('Anexo excluído.', 'sucesso');
+    const idx = atendimentosCache.findIndex(a=>a.id===atendimentoId);
+    if(idx>-1){ atendimentosCache[idx].anexos = anexosFinal; atendimentosCache[idx].qtdAnexos = anexosFinal.length; }
+  }catch(erro){
+    mostrarToast('Não foi possível excluir o anexo. ('+erro.message+')', 'erro');
+  }
 };
 
 window.excluirAtendimento = async function(id){
-  if(!confirm('Excluir este atendimento? Essa ação não pode ser desfeita.')) return;
+  if(!(await confirmarAcao('Excluir este atendimento? Essa ação não pode ser desfeita.', 'Excluir'))) return;
   try{
     await deleteDoc(doc(db,'atendimentos',id));
     renderAtendimentos();
   }catch(erro){
-    alert('Não foi possível excluir. ('+erro.message+')');
+    mostrarToast('Não foi possível excluir. ('+erro.message+')', 'erro');
   }
 };
 
@@ -959,9 +1117,10 @@ window.salvarAtendimento = async function(id){
   try{
     await salvarDoc('atendimentos', id||null, dados);
     document.querySelector('.modal-fundo').remove();
+    mostrarToast('Atendimento salvo com sucesso!', 'sucesso');
     renderAtendimentos();
   }catch(erro){
-    alert('Não foi possível salvar. Verifique sua conexão. ('+erro.message+')');
+    mostrarToast('Não foi possível salvar. Verifique sua conexão. ('+erro.message+')', 'erro');
   }
 };
 
@@ -983,7 +1142,10 @@ function desenharTransportes(){
   c.innerHTML = `
     <div class="topo-pagina">
       <div><h2>Solicitação de <span class="destaque">Transportes</span></h2><div class="barra-assinatura"></div></div>
-      ${botaoNovo}
+      <div style="display:flex;gap:10px;">
+        <button class="btn-secundario" onclick="window.exportarTransportesCSV()">⬇ Exportar CSV</button>
+        ${botaoNovo}
+      </div>
     </div>
     <div class="tabela-box">
       <table>
@@ -1028,13 +1190,20 @@ window.abrirModalTransporte = function(registro){
   ligarBuscaPessoa('t', { nome:'t_nome', telefone:'t_contato' });
 };
 
+window.exportarTransportesCSV = function(){
+  exportarCSV('transportes.csv', [
+    {chave:'nome', rotulo:'Nome'}, {chave:'data', rotulo:'Data'}, {chave:'horario', rotulo:'Horário'},
+    {chave:'hospital', rotulo:'Hospital'}, {chave:'contato', rotulo:'Contato'}, {chave:'confirmado', rotulo:'Confirmado'}
+  ], transportesCache);
+};
+
 window.excluirTransporte = async function(id){
-  if(!confirm('Excluir esta solicitação de transporte? Essa ação não pode ser desfeita.')) return;
+  if(!(await confirmarAcao('Excluir esta solicitação de transporte? Essa ação não pode ser desfeita.', 'Excluir'))) return;
   try{
     await deleteDoc(doc(db,'transportes',id));
     renderTransportes();
   }catch(erro){
-    alert('Não foi possível excluir. ('+erro.message+')');
+    mostrarToast('Não foi possível excluir. ('+erro.message+')', 'erro');
   }
 };
 
@@ -1050,9 +1219,10 @@ window.salvarTransporte = async function(id){
   try{
     await salvarDoc('transportes', id||null, dados);
     document.querySelector('.modal-fundo').remove();
+    mostrarToast('Transporte salvo com sucesso!', 'sucesso');
     renderTransportes();
   }catch(erro){
-    alert('Não foi possível salvar. ('+erro.message+')');
+    mostrarToast('Não foi possível salvar. ('+erro.message+')', 'erro');
   }
 };
 
@@ -1066,6 +1236,15 @@ async function renderEquipamentos(){
   c.innerHTML = '<div class="topo-pagina"><div><h2>Controle de <span class="destaque">Equipamentos</span></h2><div class="barra-assinatura"></div></div></div><p style="color:#9FB3A6;">Carregando...</p>';
   equipCache = await listarColecao('equipamentos');
   desenharEquipamentos();
+}
+
+// Converte o criadoEm (Timestamp do Firestore) em dias corridos desde o
+// empréstimo — usado pra sinalizar equipamento parado há muito tempo, já
+// que o cadastro de Equipamentos não tinha nenhum campo de data.
+function diasEmprestado(criadoEm){
+  if(!criadoEm || typeof criadoEm.toDate !== 'function') return null;
+  const hoje = new Date();
+  return Math.max(0, Math.floor((hoje - criadoEm.toDate()) / (1000*60*60*24)));
 }
 
 function desenharEquipamentos(){
@@ -1089,23 +1268,39 @@ function desenharEquipamentos(){
         ${kpiMini('rgba(59,130,246,.18)','#60A5FA','✅',entregues,'Entregues')}
         ${kpiMini('rgba(168,85,247,.18)','#C084FC','🏷️',tiposCadastrados,'Tipos Cadastrados')}
       </div>
-      ${botaoNovo}
+      <div style="display:flex;gap:10px;">
+        <button class="btn-secundario" onclick="window.exportarEquipamentosCSV()">⬇ Exportar CSV</button>
+        ${botaoNovo}
+      </div>
     </div>
     <div class="tabela-box">
       <table>
-        <thead><tr><th>Nome</th><th>Equipamento</th><th>Contato</th><th>Status</th>${somenteLeitura()?'':'<th></th>'}</tr></thead>
+        <thead><tr><th>Nome</th><th>Equipamento</th><th>Contato</th><th>Emprestado há</th><th>Status</th>${somenteLeitura()?'':'<th></th>'}</tr></thead>
         <tbody>
-          ${equipCache.map(e=>`
+          ${equipCache.map(e=>{
+            const emUsoAgora = normalizarTexto(e.devolucao)==='USANDO';
+            const dias = emUsoAgora ? diasEmprestado(e.criadoEm) : null;
+            const celDias = dias===null ? '—' : (dias===0 ? 'Hoje' : dias+' dia'+(dias===1?'':'s'));
+            const alerta = dias!==null && dias>=30;
+            return `
             <tr>
               <td>${e.nome||''}</td><td>${e.equipamento||''}</td><td>${linkWhatsapp(e.contato)}</td>
+              <td ${alerta?'style="color:#FF8E92;font-weight:800;"':''}>${celDias}${alerta?' ⚠️':''}</td>
               <td>${badgeStatus(e.devolucao)}</td>
               ${somenteLeitura() ? '' : `<td><div class="grupo-acoes-tabela"><button class="btn-secundario" onclick='window.abrirModalEquipamento(${JSON.stringify(e)})'>Editar</button><button class="btn-perigo" onclick="window.excluirEquipamento('${e.id}')">Excluir</button></div></td>`}
-            </tr>`).join('') || `<tr><td colspan="5" style="text-align:center;color:#5E7368;padding:20px;">Nenhum empréstimo ainda.</td></tr>`}
+            </tr>`;}).join('') || `<tr><td colspan="6" style="text-align:center;color:#5E7368;padding:20px;">Nenhum empréstimo ainda.</td></tr>`}
         </tbody>
       </table>
     </div>
   `;
 }
+
+window.exportarEquipamentosCSV = function(){
+  exportarCSV('equipamentos.csv', [
+    {chave:'nome', rotulo:'Nome'}, {chave:'equipamento', rotulo:'Equipamento'}, {chave:'contato', rotulo:'Contato'},
+    {chave:'devolucao', rotulo:'Status'}
+  ], equipCache);
+};
 
 window.abrirModalEquipamento = function(registro){
   registro = registro || {};
@@ -1132,12 +1327,12 @@ window.abrirModalEquipamento = function(registro){
 };
 
 window.excluirEquipamento = async function(id){
-  if(!confirm('Excluir este empréstimo? Essa ação não pode ser desfeita.')) return;
+  if(!(await confirmarAcao('Excluir este empréstimo? Essa ação não pode ser desfeita.', 'Excluir'))) return;
   try{
     await deleteDoc(doc(db,'equipamentos',id));
     renderEquipamentos();
   }catch(erro){
-    alert('Não foi possível excluir. ('+erro.message+')');
+    mostrarToast('Não foi possível excluir. ('+erro.message+')', 'erro');
   }
 };
 
@@ -1151,9 +1346,10 @@ window.salvarEquipamento = async function(id){
   try{
     await salvarDoc('equipamentos', id||null, dados);
     document.querySelector('.modal-fundo').remove();
+    mostrarToast('Empréstimo salvo com sucesso!', 'sucesso');
     renderEquipamentos();
   }catch(erro){
-    alert('Não foi possível salvar. ('+erro.message+')');
+    mostrarToast('Não foi possível salvar. ('+erro.message+')', 'erro');
   }
 };
 
@@ -1332,7 +1528,7 @@ window.abrirModalEvento = function(registro, dataPreSelecionada){
 };
 
 window.excluirEvento = async function(id){
-  if(!confirm('Excluir este compromisso? Essa ação não pode ser desfeita.')) return;
+  if(!(await confirmarAcao('Excluir este compromisso? Essa ação não pode ser desfeita.', 'Excluir'))) return;
   try{
     await deleteDoc(doc(db,'agendaEventos',id));
     const modal = document.querySelector('.modal-fundo');
@@ -1340,7 +1536,7 @@ window.excluirEvento = async function(id){
     agendaCache = await listarColecao('agendaEventos');
     desenharAgenda();
   }catch(erro){
-    alert('Não foi possível excluir. ('+erro.message+')');
+    mostrarToast('Não foi possível excluir. ('+erro.message+')', 'erro');
   }
 };
 
@@ -1355,6 +1551,7 @@ window.salvarEvento = async function(id){
   try{
     await salvarDoc('agendaEventos', id||null, dados);
     document.querySelector('.modal-fundo').remove();
+    mostrarToast('Compromisso salvo com sucesso!', 'sucesso');
     agendaCache = await listarColecao('agendaEventos');
     const partes = dataDigitada.split('/');
     if(partes.length===3){
@@ -1364,7 +1561,7 @@ window.salvarEvento = async function(id){
     }
     desenharAgenda();
   }catch(erro){
-    alert('Não foi possível salvar. ('+erro.message+')');
+    mostrarToast('Não foi possível salvar. ('+erro.message+')', 'erro');
   }
 };
 
@@ -1406,7 +1603,10 @@ function desenharEventos(){
         ${kpiMini('rgba(232,174,0,.18)','#F2C43D','🏁',realizados,'Realizados')}
         ${kpiMini('rgba(168,85,247,.18)','#C084FC','📅',esteMes,'Este Mês')}
       </div>
-      ${botaoNovo}
+      <div style="display:flex;gap:10px;">
+        <button class="btn-secundario" onclick="window.exportarEventosCSV()">⬇ Exportar CSV</button>
+        ${botaoNovo}
+      </div>
     </div>
     <div class="tabela-box">
       <table>
@@ -1423,6 +1623,13 @@ function desenharEventos(){
     </div>
   `;
 }
+
+window.exportarEventosCSV = function(){
+  exportarCSV('eventos.csv', [
+    {chave:'data', rotulo:'Data'}, {chave:'titulo', rotulo:'Título'}, {chave:'local', rotulo:'Local'},
+    {chave:'status', rotulo:'Status'}, {chave:'descricao', rotulo:'Descrição'}
+  ], eventosCache);
+};
 
 window.abrirModalEvt = function(registro){
   registro = registro || {};
@@ -1448,12 +1655,12 @@ window.abrirModalEvt = function(registro){
 };
 
 window.excluirEvt = async function(id){
-  if(!confirm('Excluir este evento? Essa ação não pode ser desfeita.')) return;
+  if(!(await confirmarAcao('Excluir este evento? Essa ação não pode ser desfeita.', 'Excluir'))) return;
   try{
     await deleteDoc(doc(db,'eventos',id));
     renderEventos();
   }catch(erro){
-    alert('Não foi possível excluir. ('+erro.message+')');
+    mostrarToast('Não foi possível excluir. ('+erro.message+')', 'erro');
   }
 };
 
@@ -1468,9 +1675,10 @@ window.salvarEvt = async function(id){
   try{
     await salvarDoc('eventos', id||null, dados);
     document.querySelector('.modal-fundo').remove();
+    mostrarToast('Evento salvo com sucesso!', 'sucesso');
     renderEventos();
   }catch(erro){
-    alert('Não foi possível salvar. ('+erro.message+')');
+    mostrarToast('Não foi possível salvar. ('+erro.message+')', 'erro');
   }
 };
 
@@ -1492,6 +1700,7 @@ function badgeIntencao(valor){
 }
 
 let chartsPessoasAtivos = [];
+let pessoasFiltradasAtual = [];
 
 function desenharPessoas(filtroTexto){
   const c = document.getElementById('conteudo');
@@ -1528,6 +1737,7 @@ function desenharPessoas(filtroTexto){
       normalizarTexto(p.tituloEleitor).includes(f)
     );
   }
+  pessoasFiltradasAtual = lista;
 
   c.innerHTML = `
     <div class="topo-pagina">
@@ -1560,6 +1770,7 @@ function desenharPessoas(filtroTexto){
     <div class="barra-acoes">
       <input id="fTextoPessoa" placeholder="Buscar por nome, bairro, CPF, RG ou título..." value="${filtroTexto||''}" oninput="window.filtrarPessoas()">
       <button class="btn-secundario" onclick="window.irPara('pessoas')">↻ Atualizar</button>
+      <button class="btn-secundario" onclick="window.exportarPessoasCSV()">⬇ Exportar CSV</button>
     </div>
     <div class="tabela-box">
       <table>
@@ -1595,12 +1806,21 @@ window.filtrarPessoas = function(){
   desenharPessoas(document.getElementById('fTextoPessoa').value);
 };
 
+window.exportarPessoasCSV = function(){
+  exportarCSV('pessoas.csv', [
+    {chave:'nome', rotulo:'Nome'}, {chave:'telefone', rotulo:'Telefone'}, {chave:'dataNascimento', rotulo:'Nascimento'},
+    {chave:'cpf', rotulo:'CPF'}, {chave:'rg', rotulo:'RG'}, {chave:'tituloEleitor', rotulo:'Título de Eleitor'},
+    {chave:'bairro', rotulo:'Bairro'}, {chave:'endereco', rotulo:'Endereço'}, {chave:'intencaoVoto', rotulo:'Intenção de Voto'}
+  ], pessoasFiltradasAtual);
+};
+
 // ============================================================
 // VOTANTES — lista filtrada por intenção de voto, separada do Cadastro
 // completo, pra facilitar quando for a hora de mandar mensagem em massa
 // (manual, um a um, pelo link do WhatsApp).
 // ============================================================
 let filtroVotantesAtual = 'SIM';
+let votantesFiltradosAtual = [];
 
 async function renderVotantes(){
   const c = document.getElementById('conteudo');
@@ -1627,6 +1847,7 @@ function desenharVotantes(filtroTexto){
     const f = normalizarTexto(filtroTexto);
     lista = lista.filter(p=>normalizarTexto(p.nome).includes(f) || normalizarTexto(p.bairro).includes(f));
   }
+  votantesFiltradosAtual = lista;
 
   c.innerHTML = `
     <div class="topo-pagina">
@@ -1648,6 +1869,7 @@ function desenharVotantes(filtroTexto){
     <div class="barra-acoes">
       <input id="fTextoVotantes" placeholder="Buscar nome ou bairro..." value="${filtroTexto||''}" oninput="window.filtrarVotantes()">
       <button class="btn-secundario" onclick="window.irPara('votantes')">↻ Atualizar</button>
+      <button class="btn-secundario" onclick="window.exportarVotantesCSV()">⬇ Exportar CSV</button>
     </div>
 
     <div class="tabela-box">
@@ -1671,6 +1893,12 @@ window.mudarFiltroVotantes = function(valor){
 
 window.filtrarVotantes = function(){
   desenharVotantes(document.getElementById('fTextoVotantes').value);
+};
+
+window.exportarVotantesCSV = function(){
+  exportarCSV('votantes_'+filtroVotantesAtual.toLowerCase()+'.csv', [
+    {chave:'nome', rotulo:'Nome'}, {chave:'telefone', rotulo:'Telefone'}, {chave:'bairro', rotulo:'Bairro'}
+  ], votantesFiltradosAtual);
 };
 
 window.abrirModalPessoa = function(registro){
@@ -1730,13 +1958,13 @@ window.marcarIntencaoVoto = function(valor, apenasAplicarSemAlternar){
 };
 
 window.excluirPessoa = async function(id){
-  if(!confirm('Excluir esta pessoa do cadastro? Essa ação não pode ser desfeita. Atendimentos/transportes/equipamentos já registrados NÃO são apagados.')) return;
+  if(!(await confirmarAcao('Excluir esta pessoa do cadastro? Essa ação não pode ser desfeita. Atendimentos/transportes/equipamentos já registrados NÃO são apagados.', 'Excluir'))) return;
   try{
     await deleteDoc(doc(db,'pessoas',id));
     pessoasCache = await listarColecaoSimples('pessoas');
     if(paginaAtual==='votantes') desenharVotantes(); else desenharPessoas();
   }catch(erro){
-    alert('Não foi possível excluir. ('+erro.message+')');
+    mostrarToast('Não foi possível excluir. ('+erro.message+')', 'erro');
   }
 };
 
@@ -1753,14 +1981,15 @@ window.salvarPessoa = async function(id){
     intencaoVoto: document.getElementById('p_intencao').value,
     observacoes: document.getElementById('p_obs').value.trim()
   };
-  if(!dados.nome){ alert('Preencha o nome.'); return; }
+  if(!dados.nome){ mostrarToast('Preencha o nome.', 'aviso'); return; }
   try{
     await salvarDoc('pessoas', id||null, dados);
     document.querySelector('.modal-fundo').remove();
+    mostrarToast('Pessoa salva com sucesso!', 'sucesso');
     pessoasCache = await listarColecaoSimples('pessoas');
     desenharPessoas();
   }catch(erro){
-    alert('Não foi possível salvar. ('+erro.message+')');
+    mostrarToast('Não foi possível salvar. ('+erro.message+')', 'erro');
   }
 };
 
@@ -1894,18 +2123,18 @@ window.adicionarTipoAtendimento = async function(){
     await carregarTiposConfiguraveis();
     desenharConfiguracoes();
   }catch(erro){
-    alert('Não foi possível adicionar. Só ADMIN pode cadastrar tipos. ('+erro.message+')');
+    mostrarToast('Não foi possível adicionar. Só ADMIN pode cadastrar tipos. ('+erro.message+')', 'erro');
   }
 };
 
 window.excluirTipoAtendimento = async function(id){
-  if(!confirm('Excluir este tipo? Atendimentos que já usam esse tipo não serão apagados.')) return;
+  if(!(await confirmarAcao('Excluir este tipo? Atendimentos que já usam esse tipo não serão apagados.', 'Excluir'))) return;
   try{
     await deleteDoc(doc(db,'tiposAtendimento',id));
     await carregarTiposConfiguraveis();
     desenharConfiguracoes();
   }catch(erro){
-    alert('Não foi possível excluir. ('+erro.message+')');
+    mostrarToast('Não foi possível excluir. ('+erro.message+')', 'erro');
   }
 };
 
@@ -1919,18 +2148,18 @@ window.adicionarTipoEquipamento = async function(){
     await carregarTiposConfiguraveis();
     desenharConfiguracoes();
   }catch(erro){
-    alert('Não foi possível adicionar. Só ADMIN pode cadastrar tipos. ('+erro.message+')');
+    mostrarToast('Não foi possível adicionar. Só ADMIN pode cadastrar tipos. ('+erro.message+')', 'erro');
   }
 };
 
 window.excluirTipoEquipamento = async function(id){
-  if(!confirm('Excluir este tipo? Empréstimos que já usam esse tipo não serão apagados.')) return;
+  if(!(await confirmarAcao('Excluir este tipo? Empréstimos que já usam esse tipo não serão apagados.', 'Excluir'))) return;
   try{
     await deleteDoc(doc(db,'tiposEquipamento',id));
     await carregarTiposConfiguraveis();
     desenharConfiguracoes();
   }catch(erro){
-    alert('Não foi possível excluir. ('+erro.message+')');
+    mostrarToast('Não foi possível excluir. ('+erro.message+')', 'erro');
   }
 };
 
@@ -2023,13 +2252,13 @@ window.abrirModalUsuario = function(registro){
 };
 
 window.excluirUsuario = async function(id){
-  if(id === USUARIO.uid){ alert('Você não pode excluir o seu próprio perfil.'); return; }
-  if(!confirm('Excluir este perfil? A pessoa perde acesso ao sistema na hora. (O login dela continua existindo no Firebase Authentication — se quiser apagar de vez, remova também por lá.)')) return;
+  if(id === USUARIO.uid){ mostrarToast('Você não pode excluir o seu próprio perfil.', 'aviso'); return; }
+  if(!(await confirmarAcao('Excluir este perfil? A pessoa perde acesso ao sistema na hora. (O login dela continua existindo no Firebase Authentication — se quiser apagar de vez, remova também por lá.)', 'Excluir'))) return;
   try{
     await deleteDoc(doc(db,'usuarios',id));
     renderUsuarios();
   }catch(erro){
-    alert('Não foi possível excluir. ('+erro.message+')');
+    mostrarToast('Não foi possível excluir. ('+erro.message+')', 'erro');
   }
 };
 
@@ -2043,15 +2272,16 @@ window.salvarUsuario = async function(id){
   let uidFinal = id;
   if(!id){
     uidFinal = document.getElementById('u_uid').value.trim();
-    if(!uidFinal){ alert('Cole o UID do Firebase Authentication antes de salvar.'); return; }
+    if(!uidFinal){ mostrarToast('Cole o UID do Firebase Authentication antes de salvar.', 'aviso'); return; }
   }
-  if(!dados.nome){ alert('Preencha o nome.'); return; }
+  if(!dados.nome){ mostrarToast('Preencha o nome.', 'aviso'); return; }
   try{
     await setDoc(doc(db,'usuarios',uidFinal), dados, { merge:true });
     document.querySelector('.modal-fundo').remove();
+    mostrarToast('Perfil salvo com sucesso!', 'sucesso');
     renderUsuarios();
   }catch(erro){
-    alert('Não foi possível salvar. Só ADMIN pode editar perfis. ('+erro.message+')');
+    mostrarToast('Não foi possível salvar. Só ADMIN pode editar perfis. ('+erro.message+')', 'erro');
   }
 };
 
