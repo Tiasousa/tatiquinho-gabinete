@@ -187,6 +187,134 @@
   .badge-intencao.INDECISO{background:rgba(232,174,0,.18);color:#F2C43D;}
   .badge-intencao.NAO{background:rgba(229,72,77,.18);color:#FF8E92;}
   .badge-intencao.vazio{background:var(--superficie-2);color:var(--texto-fraco);}
+
+  /* VOTANTES — evolução visual sem alterar os demais módulos */
+  .votantes-topo{
+    display:flex;
+    align-items:flex-end;
+    justify-content:space-between;
+    gap:18px;
+    flex-wrap:wrap;
+    margin-bottom:18px;
+  }
+  .votantes-topo .cabecalho-titulo{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+  }
+  .votantes-topo .cabecalho-titulo h2{
+    margin:0;
+    font-size:24px;
+    font-weight:800;
+    color:#fff;
+  }
+  .votantes-topo .cabecalho-titulo p{
+    margin:0;
+    font-size:11.5px;
+    color:var(--texto-suave);
+  }
+  .votantes-resumo{
+    display:grid;
+    grid-template-columns:repeat(3,minmax(170px,1fr));
+    gap:10px;
+    max-width:720px;
+    margin-bottom:18px;
+  }
+  .votantes-card-filtro{
+    min-height:78px;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:13px 15px;
+    border:1px solid var(--borda);
+    border-radius:var(--raio-m);
+    background:linear-gradient(180deg,var(--superficie),var(--preto-suave));
+    color:var(--texto);
+    cursor:pointer;
+    text-align:left;
+    font-family:inherit;
+    transition:border-color .15s ease,transform .15s ease,background .15s ease;
+  }
+  .votantes-card-filtro:hover{
+    border-color:rgba(168,217,72,.55);
+    transform:translateY(-1px);
+  }
+  .votantes-card-filtro.selecionada{
+    border-color:var(--limao);
+    background:linear-gradient(180deg,rgba(14,59,42,.95),rgba(8,42,29,.95));
+    box-shadow:inset 0 0 0 1px rgba(168,217,72,.08);
+  }
+  .votantes-card-icone{
+    width:40px;
+    height:40px;
+    border-radius:12px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:19px;
+    flex-shrink:0;
+  }
+  .votantes-card-info{
+    min-width:0;
+    display:flex;
+    flex-direction:column;
+    gap:3px;
+  }
+  .votantes-card-numero{
+    font-size:20px;
+    line-height:1;
+    font-weight:800;
+    color:#fff;
+  }
+  .votantes-card-rotulo{
+    font-size:10px;
+    color:var(--texto-suave);
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:.35px;
+    white-space:nowrap;
+  }
+  .votantes-card-filtro.selecionada .votantes-card-rotulo{
+    color:#dcebdc;
+  }
+  .votantes-barra{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:16px;
+    flex-wrap:wrap;
+  }
+  .votantes-busca{
+    flex:1 1 280px;
+    min-width:220px;
+    padding:11px 14px;
+    border:1.5px solid var(--borda);
+    border-radius:var(--raio-s);
+    font-size:13px;
+    font-family:inherit;
+    background:var(--superficie);
+    color:var(--texto);
+  }
+  .votantes-busca:focus{
+    outline:none;
+    border-color:var(--limao);
+  }
+  .votantes-lista-info{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    margin:0 2px 8px;
+    color:var(--texto-suave);
+    font-size:11px;
+  }
+  .votantes-lista-info strong{
+    color:var(--texto);
+    font-size:11.5px;
+  }
+  .votantes-tabela{
+    max-height:62vh;
+  }
   .item-resultado-pessoa{padding:9px 13px;cursor:pointer;border-bottom:1px solid var(--borda);display:flex;flex-direction:column;gap:2px;}
   .item-resultado-pessoa:last-child{border-bottom:none;}
   .item-resultado-pessoa:hover{background:var(--verde-escuro);}
@@ -291,6 +419,44 @@
     .barra-acoes input,.barra-acoes select,.barra-acoes button{width:100%;}
 
     .seletor-intencao{grid-template-columns:1fr;}
+
+    .votantes-topo{
+      align-items:stretch;
+      margin-bottom:14px;
+    }
+    .votantes-resumo{
+      grid-template-columns:1fr;
+      max-width:none;
+      gap:8px;
+      margin-bottom:14px;
+    }
+    .votantes-card-filtro{
+      min-height:66px;
+      padding:11px 13px;
+    }
+    .votantes-card-icone{
+      width:38px;
+      height:38px;
+      border-radius:10px;
+    }
+    .votantes-barra{
+      flex-direction:column;
+      align-items:stretch;
+      gap:8px;
+    }
+    .votantes-busca{
+      width:100%;
+      min-width:0;
+      flex:none;
+    }
+    .votantes-barra button{
+      width:100%;
+    }
+    .votantes-lista-info{
+      align-items:flex-start;
+      flex-direction:column;
+      gap:3px;
+    }
 
     .btn-primario,.btn-secundario,.btn-perigo{min-height:44px;}
 
@@ -1845,49 +2011,95 @@ function desenharVotantes(filtroTexto){
   const votosNao = pessoasCache.filter(p=>p.intencaoVoto==='NAO');
 
   const abas = [
-    { valor:'SIM', label:'✅ Vão votar', lista:votosSim },
-    { valor:'INDECISO', label:'🤔 Indecisos', lista:votosIndeciso },
-    { valor:'NAO', label:'❌ Não vão votar', lista:votosNao }
+    {
+      valor:'SIM',
+      icone:'✅',
+      label:'Vão votar',
+      lista:votosSim,
+      fundo:'rgba(22,163,74,.18)',
+      cor:'#3FD17D'
+    },
+    {
+      valor:'INDECISO',
+      icone:'🤔',
+      label:'Indecisos',
+      lista:votosIndeciso,
+      fundo:'rgba(232,174,0,.18)',
+      cor:'#F2C43D'
+    },
+    {
+      valor:'NAO',
+      icone:'❌',
+      label:'Não vão votar',
+      lista:votosNao,
+      fundo:'rgba(229,72,77,.18)',
+      cor:'#FF8E92'
+    }
   ];
 
-  let lista = abas.find(a=>a.valor===filtroVotantesAtual).lista;
+  const abaAtual = abas.find(a=>a.valor===filtroVotantesAtual) || abas[0];
+  let lista = abaAtual.lista;
+
   if(filtroTexto){
     const f = normalizarTexto(filtroTexto);
-    lista = lista.filter(p=>normalizarTexto(p.nome).includes(f) || normalizarTexto(p.bairro).includes(f));
+    lista = lista.filter(p=>
+      normalizarTexto(p.nome).includes(f) ||
+      normalizarTexto(p.bairro).includes(f)
+    );
   }
+
   votantesFiltradosAtual = lista;
 
   c.innerHTML = `
-    <div class="topo-pagina">
+    <div class="votantes-topo">
       <div class="cabecalho-titulo">
         <h2>Lista de <span class="destaque">Votantes</span></h2>
         <p>Filtrada por intenção de voto — use pra organizar contato futuro.</p>
       </div>
-      <div class="kpis-mini-row">
-        ${kpiMini('rgba(22,163,74,.18)','#3FD17D','✅',votosSim.length,'Vão Votar')}
-        ${kpiMini('rgba(232,174,0,.18)','#F2C43D','🤔',votosIndeciso.length,'Indecisos')}
-        ${kpiMini('rgba(229,72,77,.18)','#FF8E92','❌',votosNao.length,'Não Vão Votar')}
-      </div>
     </div>
 
-    <div class="seletor-intencao" style="max-width:520px;margin-bottom:16px;">
-      ${abas.map(a=>`<button type="button" class="opcao-intencao ${filtroVotantesAtual===a.valor?'selecionada':''}" onclick="window.mudarFiltroVotantes('${a.valor}')"><span class="icone-intencao">${a.label.split(' ')[0]}</span><span>${a.label.split(' ').slice(1).join(' ')} (${a.lista.length})</span></button>`).join('')}
+    <div class="votantes-resumo">
+      ${abas.map(a=>`
+        <button
+          type="button"
+          class="votantes-card-filtro ${filtroVotantesAtual===a.valor?'selecionada':''}"
+          onclick="window.mudarFiltroVotantes('${a.valor}')"
+          aria-pressed="${filtroVotantesAtual===a.valor?'true':'false'}">
+          <span class="votantes-card-icone" style="background:${a.fundo};color:${a.cor};">${a.icone}</span>
+          <span class="votantes-card-info">
+            <span class="votantes-card-numero">${a.lista.length}</span>
+            <span class="votantes-card-rotulo">${a.label}</span>
+          </span>
+        </button>
+      `).join('')}
     </div>
 
-    <div class="barra-acoes">
-      <input id="fTextoVotantes" placeholder="Buscar nome ou bairro..." value="${filtroTexto||''}" oninput="window.filtrarVotantes()">
+    <div class="votantes-barra">
+      <input
+        class="votantes-busca"
+        id="fTextoVotantes"
+        placeholder="Buscar nome ou bairro..."
+        value="${filtroTexto||''}"
+        oninput="window.filtrarVotantes()">
       <button class="btn-secundario" onclick="window.irPara('votantes')">↻ Atualizar</button>
       <button class="btn-secundario" onclick="window.exportarVotantesCSV()">⬇ Exportar CSV</button>
     </div>
 
-    <div class="tabela-box">
+    <div class="votantes-lista-info">
+      <strong>${abaAtual.icone} ${abaAtual.label}</strong>
+      <span>${lista.length} ${lista.length===1?'registro':'registros'}${filtroTexto?' encontrado'+(lista.length===1?'':'s'):''}</span>
+    </div>
+
+    <div class="tabela-box votantes-tabela">
       <table>
         <thead><tr><th>Nome</th><th>Telefone</th><th>Bairro</th></tr></thead>
         <tbody>
           ${lista.map(p=>`
             <tr>
-              <td>${p.nome||''}</td><td>${linkWhatsapp(p.telefone)}</td><td>${p.bairro||''}</td>
-            </tr>`).join('') || `<tr><td colspan="3" style="text-align:center;color:#5E7368;padding:20px;">Ninguém nessa lista ainda.</td></tr>`}
+              <td>${p.nome||''}</td>
+              <td>${linkWhatsapp(p.telefone)}</td>
+              <td>${p.bairro||''}</td>
+            </tr>`).join('') || `<tr><td colspan="3" style="text-align:center;color:#5E7368;padding:24px;">${filtroTexto ? 'Nenhum resultado para esta busca.' : 'Ninguém nessa lista ainda.'}</td></tr>`}
         </tbody>
       </table>
     </div>
