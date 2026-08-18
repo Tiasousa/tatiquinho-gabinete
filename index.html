@@ -117,15 +117,15 @@
 
   main{flex:1;overflow-y:auto;padding:26px 28px 40px;}
 
-  .topo-pagina{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;gap:16px;flex-wrap:wrap;}
+  .topo-pagina{display:flex;flex-direction:column;gap:14px;margin-bottom:16px;}
+  .linha-titulo-acao{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;}
   .topo-pagina .cabecalho-titulo{display:flex;flex-direction:column;gap:6px;}
   .topo-pagina .cabecalho-titulo p{margin:0;font-size:11.5px;color:var(--texto-suave);}
-  .kpis-mini-row{display:flex;gap:10px;flex-wrap:wrap;flex:1;justify-content:center;min-width:280px;}
-  .kpi-mini{display:flex;align-items:center;gap:10px;background:var(--superficie);border:1px solid var(--borda);border-radius:12px;padding:10px 16px;min-width:135px;}
+  .kpis-mini-row{display:flex;gap:10px;flex-wrap:wrap;}
+  .kpi-mini{display:flex;align-items:center;gap:10px;background:var(--superficie);border:1px solid var(--borda);border-radius:12px;padding:10px 16px;min-width:135px;flex:1 1 135px;max-width:220px;}
   .icone-kpi-mini{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;}
   .num-kpi-mini{font-size:18px;font-weight:800;color:#fff;line-height:1;}
   .rot-kpi-mini{font-size:9.5px;color:var(--texto-suave);margin-top:2px;text-transform:uppercase;letter-spacing:.3px;}
-  @media(max-width:900px){ .kpis-mini-row{order:3;width:100%;justify-content:flex-start;} }
   .topo-pagina h2{margin:0 0 8px;font-size:24px;font-weight:800;color:#fff;}
   .topo-pagina .destaque{color:var(--limao);}
   .topo-pagina .barra-assinatura{width:64px;}
@@ -267,16 +267,17 @@
 
     main{padding:14px;padding-bottom:28px;}
 
-    .topo-pagina{flex-direction:column;align-items:stretch;gap:12px;}
-    .topo-pagina > .cabecalho-titulo,
-    .topo-pagina > div:first-child{width:100%;}
-    .topo-pagina > .btn-primario,
-    .topo-pagina > .btn-secundario{width:100%;text-align:center;}
+    .topo-pagina{gap:12px;}
+    .linha-titulo-acao{flex-direction:column;align-items:stretch;gap:12px;}
+    .linha-titulo-acao > .cabecalho-titulo,
+    .linha-titulo-acao > div:first-child{width:100%;}
+    .linha-titulo-acao > .btn-primario,
+    .linha-titulo-acao > .btn-secundario{width:100%;text-align:center;}
     .grupo-acoes-topo{width:100%;}
     .grupo-acoes-topo > button{flex:1;}
     .topo-pagina h2{font-size:21px;}
 
-    .kpis-mini-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;min-width:0;order:0;justify-content:stretch;}
+    .kpis-mini-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;min-width:0;}
     .kpi-mini{min-width:0;width:100%;}
 
     .kpis{grid-template-columns:1fr 1fr;gap:10px;}
@@ -931,9 +932,12 @@ function desenharAtendimentos(){
 
   c.innerHTML = `
     <div class="topo-pagina">
-      <div class="cabecalho-titulo">
-        <h2>Controle de <span class="destaque">Atendimentos</span></h2>
-        <p>Acompanhe e gerencie todos os atendimentos registrados.</p>
+      <div class="linha-titulo-acao">
+        <div class="cabecalho-titulo">
+          <h2>Controle de <span class="destaque">Atendimentos</span></h2>
+          <p>Acompanhe e gerencie todos os atendimentos registrados.</p>
+        </div>
+        ${botaoNovo}
       </div>
       <div class="kpis-mini-row">
         ${kpiMini('rgba(22,163,74,.18)','#3FD17D','🗒️',total,'Total')}
@@ -941,7 +945,6 @@ function desenharAtendimentos(){
         ${kpiMini('rgba(232,174,0,.18)','#F2C43D','🕐',emAnalise,'Em Análise')}
         ${kpiMini('rgba(168,85,247,.18)','#C084FC','📅',deHoje,'Hoje')}
       </div>
-      ${botaoNovo}
     </div>
     ${aviso}
     <div class="barra-acoes">
@@ -1162,10 +1165,12 @@ function desenharTransportes(){
   const botaoNovo = somenteLeitura() ? '' : '<button class="btn-primario" onclick="window.abrirModalTransporte()">+ Nova Solicitação</button>';
   c.innerHTML = `
     <div class="topo-pagina">
-      <div><h2>Solicitação de <span class="destaque">Transportes</span></h2><div class="barra-assinatura"></div></div>
-      <div class="grupo-acoes-topo">
-        <button class="btn-secundario" onclick="window.exportarTransportesCSV()">⬇ Exportar CSV</button>
-        ${botaoNovo}
+      <div class="linha-titulo-acao">
+        <div><h2>Solicitação de <span class="destaque">Transportes</span></h2><div class="barra-assinatura"></div></div>
+        <div class="grupo-acoes-topo">
+          <button class="btn-secundario" onclick="window.exportarTransportesCSV()">⬇ Exportar CSV</button>
+          ${botaoNovo}
+        </div>
       </div>
     </div>
     <div class="tabela-box">
@@ -1273,19 +1278,21 @@ function desenharEquipamentos(){
 
   c.innerHTML = `
     <div class="topo-pagina">
-      <div class="cabecalho-titulo">
-        <h2>Controle de <span class="destaque">Equipamentos</span></h2>
-        <p>Empréstimos e devoluções de equipamentos do gabinete.</p>
+      <div class="linha-titulo-acao">
+        <div class="cabecalho-titulo">
+          <h2>Controle de <span class="destaque">Equipamentos</span></h2>
+          <p>Empréstimos e devoluções de equipamentos do gabinete.</p>
+        </div>
+        <div class="grupo-acoes-topo">
+          <button class="btn-secundario" onclick="window.exportarEquipamentosCSV()">⬇ Exportar CSV</button>
+          ${botaoNovo}
+        </div>
       </div>
       <div class="kpis-mini-row">
         ${kpiMini('rgba(22,163,74,.18)','#3FD17D','🛠️',total,'Total')}
         ${kpiMini('rgba(232,174,0,.18)','#F2C43D','📦',emUso,'Em Uso')}
         ${kpiMini('rgba(59,130,246,.18)','#60A5FA','✅',entregues,'Entregues')}
         ${kpiMini('rgba(168,85,247,.18)','#C084FC','🏷️',tiposCadastrados,'Tipos Cadastrados')}
-      </div>
-      <div class="grupo-acoes-topo">
-        <button class="btn-secundario" onclick="window.exportarEquipamentosCSV()">⬇ Exportar CSV</button>
-        ${botaoNovo}
       </div>
     </div>
     <div class="tabela-box">
