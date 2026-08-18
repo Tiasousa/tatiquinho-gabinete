@@ -16,13 +16,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <style>
-  /* ============================================================
-     TOKENS DE MARCA — TATIQUINHO
-     Verde-escuro + preto + verde-limão (degradê), extraídos do logo.
-     Headline: Barlow Condensed (poster de campanha). Corpo: Inter.
-     Assinatura visual: barra em degradê verde→limão sob os títulos,
-     repetindo o traço que já existe na marca.
-     ============================================================ */
   :root{
     --preto:#060907;
     --preto-suave:#0B120E;
@@ -56,7 +49,6 @@
 
   .barra-assinatura{height:4px;border-radius:4px;background:var(--degrade-assinatura);}
 
-  /* ---------- LOGIN ---------- */
   #telaLogin{height:100vh;display:flex;align-items:center;justify-content:center;background:
     radial-gradient(circle at 50% 0%, rgba(168,217,72,.10), transparent 45%), var(--preto);perspective:1200px;}
   .card-login{
@@ -102,7 +94,6 @@
   .card-login button:disabled{opacity:.6;cursor:default;}
   #erroLogin{color:#FF8E92;font-size:12px;margin-top:10px;min-height:16px;text-align:center;font-weight:600;}
 
-  /* ---------- SHELL ---------- */
   #app{display:flex;flex-direction:column;height:100vh;width:100%;}
   header.topo-app{background:var(--superficie);border-bottom:1px solid var(--borda);flex-shrink:0;padding-top:env(safe-area-inset-top, 0px);}
   .topo-linha1{display:flex;align-items:center;gap:18px;padding:14px 28px;}
@@ -147,7 +138,6 @@
   .grupo-acoes-tabela{display:flex;gap:6px;}
   .grupo-acoes-topo{display:flex;gap:10px;}
 
-  /* ---------- KPIs ---------- */
   .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:24px;}
   .graficos-dashboard-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
   .listas-dashboard-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px;}
@@ -159,7 +149,6 @@
   .kpi .num{font-size:28px;font-weight:800;color:#fff;line-height:1;}
   .kpi .rot{font-size:10.5px;color:var(--texto-suave);text-transform:uppercase;letter-spacing:.5px;margin-top:8px;font-weight:700;}
 
-  /* ---------- tabela ---------- */
   .barra-acoes{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
   .barra-acoes input,.barra-acoes select{padding:10px 13px;border:1.5px solid var(--borda);border-radius:var(--raio-s);font-size:13px;font-family:inherit;background:var(--superficie);color:var(--texto);}
   .barra-acoes input:focus,.barra-acoes select:focus{outline:none;border-color:var(--limao);}
@@ -177,7 +166,6 @@
   .badge.CANCELADO,.badge.NAO{background:rgba(229,72,77,.18);color:#FF8E92;border:1px solid rgba(255,142,146,.3);}
   .badge.USANDO{background:rgba(232,174,0,.18);color:#F2C43D;border:1px solid rgba(242,196,61,.3);}
 
-  /* ---------- modal ---------- */
   .modal-fundo{position:fixed;inset:0;background:rgba(2,6,4,.66);display:flex;align-items:flex-start;justify-content:center;padding:40px 16px;overflow-y:auto;z-index:80;}
   .modal{background:var(--superficie);border:1px solid var(--borda);border-radius:var(--raio-l);padding:28px;width:640px;max-width:100%;box-shadow:0 40px 90px rgba(0,0,0,.5);animation:entra .2s ease both;}
   .modal h3{margin:0 0 16px;font-size:19px;font-weight:800;color:#fff;}
@@ -213,7 +201,6 @@
   .anexo-upload{display:flex;align-items:center;gap:10px;margin-top:8px;}
   .anexo-upload input[type=file]{flex:1;font-size:11.5px;color:var(--texto-suave);}
 
-  /* ---------- TOASTS ---------- */
   .toast-container{position:fixed;top:16px;right:16px;z-index:200;display:flex;flex-direction:column;gap:8px;max-width:340px;}
   .toast{background:var(--superficie);border:1px solid var(--borda);border-left:4px solid var(--limao);color:var(--texto);padding:12px 16px;border-radius:var(--raio-s);font-size:12.5px;font-weight:600;box-shadow:0 12px 30px rgba(0,0,0,.4);animation:entra .2s ease both;display:flex;align-items:flex-start;gap:10px;transition:opacity .25s ease,transform .25s ease;}
   .toast.sucesso{border-left-color:var(--verde-vivo);}
@@ -221,7 +208,6 @@
   .toast.aviso{border-left-color:var(--aviso);}
   @media(max-width:760px){ .toast-container{left:12px;right:12px;top:12px;max-width:none;} }
 
-  /* ---------- AGENDA (estilo calendário, sem rolagem, proporcional à tela) ---------- */
   main.modo-agenda{overflow:hidden;display:flex;flex-direction:column;}
   main.modo-agenda .topo-pagina{flex:0 0 auto;}
   .agenda-layout{display:flex;gap:16px;flex:1;min-height:0;}
@@ -265,7 +251,6 @@
   @keyframes sobeModalMobile{from{opacity:0;transform:translateY(28px);}to{opacity:1;transform:translateY(0);}}
 
   @media(max-width:760px){
-    /* ---- cabeçalho ---- */
     .topo-linha1{padding:10px 14px;flex-wrap:nowrap;gap:10px;}
     .saudacao-bloco{display:none;}
     .perfil-texto{display:none;}
@@ -275,7 +260,6 @@
     .avatar-topo{width:32px;height:32px;}
     .btn-sair{padding:8px 10px;font-size:11px;}
 
-    /* ---- navegação: vira uma tira de chips, mais parecida com app nativo ---- */
     nav.menu-nav{border-top:none;gap:8px;padding:8px 12px;-webkit-overflow-scrolling:touch;}
     nav.menu-nav button{background:var(--superficie-2);border:1px solid var(--borda);border-radius:999px;padding:9px 16px;font-size:12px;flex-shrink:0;}
     nav.menu-nav button.ativo{background:var(--degrade-assinatura);color:#062012;border-color:transparent;}
@@ -283,7 +267,6 @@
 
     main{padding:14px;padding-bottom:28px;}
 
-    /* ---- cabeçalho de página: empilha título, ações e KPIs, cada um ocupando a largura toda ---- */
     .topo-pagina{flex-direction:column;align-items:stretch;gap:12px;}
     .topo-pagina > .cabecalho-titulo,
     .topo-pagina > div:first-child{width:100%;}
@@ -293,37 +276,29 @@
     .grupo-acoes-topo > button{flex:1;}
     .topo-pagina h2{font-size:21px;}
 
-    /* ---- cartõezinhos de estatística: grid parelho, sem sobra de espaço na última linha ---- */
     .kpis-mini-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;min-width:0;order:0;justify-content:stretch;}
     .kpi-mini{min-width:0;width:100%;}
 
-    /* ---- KPIs principais do Dashboard ---- */
     .kpis{grid-template-columns:1fr 1fr;gap:10px;}
     .kpi{padding:14px 16px;}
     .kpi .num{font-size:23px;}
 
-    /* ---- cartões de gráfico/lista: menos respiro, mais aproveitamento ---- */
     .agenda-box{padding:14px;}
     .graficos-dashboard-grid,.listas-dashboard-grid{gap:12px;margin-bottom:12px;}
 
-    /* ---- barra de busca/filtros: empilhada, cada campo/botão ocupando a largura toda ---- */
     .barra-acoes{flex-direction:column;align-items:stretch;}
     .barra-acoes input,.barra-acoes select,.barra-acoes button{width:100%;}
 
-    /* ---- seletor de intenção de voto: uma coluna só, sem espremer o texto ---- */
     .seletor-intencao{grid-template-columns:1fr;}
 
-    /* ---- botões: alvo de toque maior ---- */
     .btn-primario,.btn-secundario,.btn-perigo{min-height:44px;}
 
-    /* ---- modal vira "bottom sheet", como a maioria dos apps ---- */
     .modal-fundo{align-items:flex-end;padding:0;}
     .modal{width:100%;max-width:100%;border-radius:20px 20px 0 0;max-height:92vh;overflow-y:auto;padding:20px 18px calc(18px + env(safe-area-inset-bottom,0px));animation:sobeModalMobile .22s ease both;}
     .modal-grid{grid-template-columns:1fr;}
     .modal-acoes{flex-wrap:wrap;}
     .modal-acoes button{flex:1;min-width:120px;}
 
-    /* ---- tabelas: primeira coluna fixa ao rolar de lado, pra sempre saber de quem é a linha ---- */
     .tabela-box th:first-child{left:0;z-index:3;}
     .tabela-box td:first-child{position:sticky;left:0;z-index:1;background:var(--superficie);}
     tbody tr:hover td:first-child{background:var(--superficie-2);}
@@ -373,10 +348,6 @@
 </div>
 <div id="toastContainer" class="toast-container"></div>
 
-<!-- =========================================================
-     PREENCHA AQUI a config do seu projeto Firebase
-     (Firebase Console > Configurações do projeto > Seus apps > SDK)
-     ========================================================= -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
 import {
@@ -404,17 +375,17 @@ const auth = getAuth(fbApp);
 const db = getFirestore(fbApp);
 const storage = getStorage(fbApp);
 
-// ---------------- ESTADO ----------------
-let USUARIO = null; // { uid, nome, cargo, ativo, email }
+let USUARIO = null;
 let paginaAtual = 'dashboard';
-let pararVigiaPerfil = null; // função pra desligar o listener ao sair
+let pararVigiaPerfil = null;
+let pararVigiaConfigGeral = null;
+const CONFIG_GERAL = { anexosHabilitados: false };
+const PAGINAS_QUE_USAM_ANEXOS = ['atendimentos', 'configuracoes'];
 
 const STATUS_ATENDIMENTO = ['EM ANALISE','CONCLUIDO','CANCELADO'];
 const TIPOS_DOCUMENTO = ['RG','CPF','CONSULTA MEDICA','RECEITA','LAUDO','COMPROVANTE','OUTRO'];
 const STATUS_EVENTO = ['PLANEJAMENTO','CONFIRMADO','REALIZADO','CANCELADO'];
 
-// Tipos de Atendimento e de Equipamento agora são configuráveis (só ADMIN
-// cadastra, na aba Configurações) em vez de uma lista fixa no código.
 let tiposAtendimentoCache = [];
 let tiposEquipamentoCache = [];
 let pessoasCache = [];
@@ -433,7 +404,7 @@ async function carregarTiposConfiguraveis(){
 function normalizarTexto(txt){
   return String(txt||'').trim().toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
 }
-function somenteLeitura(){ return false; } // Vereador agora tem os mesmos acessos de escrita que Assessor
+function somenteLeitura(){ return false; }
 function iniciaisNome(nome){
   if(!nome) return '?';
   const p = nome.trim().split(' ');
@@ -444,16 +415,9 @@ function badgeStatus(status){
   const classe = normalizarTexto(status).replace(/\s/g,'_');
   return '<span class="badge '+classe+'">'+status+'</span>';
 }
-// Card compacto de estatística (ícone redondo + número + rótulo), usado nos
-// cabeçalhos de Atendimentos, Equipamentos e Eventos.
 function kpiMini(corFundo, corTexto, icone, numero, rotulo){
   return `<div class="kpi-mini"><div class="icone-kpi-mini" style="background:${corFundo};color:${corTexto};">${icone}</div><div><div class="num-kpi-mini">${numero}</div><div class="rot-kpi-mini">${rotulo}</div></div></div>`;
 }
-// telefone clicável -> abre WhatsApp direto (wa.me). Não é disparo em massa,
-// é 1 clique = 1 conversa aberta manualmente, sem custo e sem risco de banimento.
-// Formata o campo de horário enquanto a pessoa digita: só números,
-// insere os dois pontos sozinho (ex: digitar 1400 vira 14:00), e trava
-// em valores válidos (hora até 23, minuto até 59).
 window.formatarHorario = function(input){
   let digitos = input.value.replace(/\D/g,'').slice(0,4);
   if(digitos.length >= 2){
@@ -474,15 +438,12 @@ function linkWhatsapp(telefone){
   const comDDI = numeros.length <= 11 ? '55'+numeros : numeros;
   return '<a class="link-wa" target="_blank" href="https://wa.me/'+comDDI+'">💬 '+telefone+'</a>';
 }
-// Igual ao de cima, mas já abre o WhatsApp com uma mensagem pronta no campo
-// de texto — usado no painel de aniversariantes (você só confere e envia).
 function linkWhatsappComMensagem(telefone, mensagem){
   const numeros = String(telefone||'').replace(/\D/g,'');
   if(!numeros) return null;
   const comDDI = numeros.length <= 11 ? '55'+numeros : numeros;
   return 'https://wa.me/'+comDDI+'?text='+encodeURIComponent(mensagem);
 }
-// dataNascimento vem como texto "dd/mm/aaaa" ou "dd/mm". Retorna {dia,mes} ou null.
 function diaEMesNascimento(dataNascimento){
   const partes = String(dataNascimento||'').split('/');
   if(partes.length < 2) return null;
@@ -499,7 +460,6 @@ function diasAteProximoAniversario(dataNascimento){
   return Math.round((proximo - hoje) / (1000*60*60*24));
 }
 
-// ---------------- TOASTS E CONFIRMAÇÃO (substituem alert/confirm nativos) ----------------
 function mostrarToast(mensagem, tipo){
   tipo = tipo || 'info';
   const container = document.getElementById('toastContainer');
@@ -516,8 +476,6 @@ function mostrarToast(mensagem, tipo){
   }, 4200);
 }
 
-// Substitui window.confirm por um modal no mesmo estilo do resto do app.
-// Retorna uma Promise<boolean> — use com await dentro das funções async.
 function confirmarAcao(mensagem, textoBotao){
   return new Promise(resolve=>{
     const fundo = document.createElement('div');
@@ -540,14 +498,12 @@ function confirmarAcao(mensagem, textoBotao){
   });
 }
 
-// Exporta uma lista de objetos pra CSV (separador ";", padrão do Excel
-// em pt-BR) e dispara o download no navegador. colunas = [{chave,rotulo}].
 function exportarCSV(nomeArquivo, colunas, linhas){
   if(!linhas.length){ mostrarToast('Não há dados para exportar.', 'aviso'); return; }
   const escapar = (valor)=>'"'+String(valor==null?'':valor).replace(/"/g,'""')+'"';
   const cabecalho = colunas.map(c=>escapar(c.rotulo)).join(';');
   const corpo = linhas.map(linha=>colunas.map(c=>escapar(linha[c.chave])).join(';'));
-  const conteudo = '﻿'+[cabecalho, ...corpo].join('\r\n');
+  const conteudo = '\uFEFF'+[cabecalho, ...corpo].join('\r\n');
   const blob = new Blob([conteudo], { type:'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
@@ -560,13 +516,9 @@ function exportarCSV(nomeArquivo, colunas, linhas){
   mostrarToast('Arquivo '+nomeArquivo+' exportado!', 'sucesso');
 }
 
-// ---------------- LOGIN ----------------
 document.getElementById('inputUsuario').addEventListener('keydown', e=>{ if(e.key==='Enter') fazerLogin(); });
 document.getElementById('inputSenha').addEventListener('keydown', e=>{ if(e.key==='Enter') fazerLogin(); });
 
-// Efeito 3D no card de login, seguindo o cursor — só em telas com mouse de
-// verdade (hover + pointer fino). No celular fica só a profundidade estática
-// (sombras em camadas), sem "tilt", porque não faz sentido no toque.
 if(window.matchMedia('(hover: hover) and (pointer: fine)').matches){
   const cardLogin = document.querySelector('.card-login');
   if(cardLogin){
@@ -596,7 +548,6 @@ async function fazerLogin(){
   btn.disabled = true; btn.innerText = 'Entrando...';
   try{
     await signInWithEmailAndPassword(auth, email, senha);
-    // onAuthStateChanged cuida do resto
   }catch(erro){
     const mapa = {
       'auth/invalid-credential':'Usuário ou senha incorretos.',
@@ -632,8 +583,6 @@ onAuthStateChanged(auth, async (user) => {
   USUARIO = { uid:user.uid, email:user.email, nome:p.nome||user.email, cargo:normalizarTexto(p.cargo), ativo:true, foto:p.foto||null };
   iniciarApp();
 
-  // VIGIA EM TEMPO REAL: se o ADMIN desativar esse usuário enquanto ele
-  // está com o app aberto, a sessão cai na hora — não espera próxima ação.
   if(pararVigiaPerfil) pararVigiaPerfil();
   pararVigiaPerfil = onSnapshot(doc(db,'usuarios',user.uid), (snap)=>{
     if(!snap.exists() || snap.data().ativo === false){
@@ -656,8 +605,21 @@ async function iniciarApp(){
   document.getElementById('saudacaoTopo').innerText = saud + ', ' + USUARIO.nome.split(' ')[0] + '!';
 
   montarMenu();
+  ouvirConfigGeral();
   await carregarTiposConfiguraveis();
   irPara('dashboard');
+}
+
+function ouvirConfigGeral(){
+  if(pararVigiaConfigGeral) return;
+  pararVigiaConfigGeral = onSnapshot(doc(db,'configuracoes','geral'), (snap)=>{
+    const anterior = CONFIG_GERAL.anexosHabilitados;
+    CONFIG_GERAL.anexosHabilitados = snap.exists() && snap.data().anexosHabilitados === true;
+    if(anterior !== CONFIG_GERAL.anexosHabilitados && PAGINAS_QUE_USAM_ANEXOS.includes(paginaAtual)){
+      const funcoes = { atendimentos:renderAtendimentos, configuracoes:renderConfiguracoes };
+      if(funcoes[paginaAtual]) funcoes[paginaAtual]();
+    }
+  });
 }
 
 function rotuloCargo(c){
@@ -674,7 +636,8 @@ function montarMenu(){
     {id:'atendimentos',label:'Atendimentos'},
     {id:'transportes',label:'Transportes'},
     {id:'equipamentos',label:'Equipamentos'},
-    {id:'agenda',label:'Agenda'}
+    {id:'agenda',label:'Agenda'},
+    {id:'relatorios',label:'Relatórios'}
   ];
   if(USUARIO.cargo === 'ADMIN') itens.push({id:'configuracoes',label:'Configurações'}, {id:'usuarios',label:'Usuários'});
   const nav = document.getElementById('menuNav');
@@ -697,17 +660,14 @@ function irPara(pagina){
   paginaAtual = pagina;
   marcarMenuAtivo(pagina);
   document.getElementById('conteudo').classList.toggle('modo-agenda', pagina==='agenda');
-  const funcoes = { dashboard:renderDashboard, eventos:renderEventos, pessoas:renderPessoas, votantes:renderVotantes, atendimentos:renderAtendimentos, transportes:renderTransportes, equipamentos:renderEquipamentos, agenda:renderAgenda, usuarios:renderUsuarios, configuracoes:renderConfiguracoes };
+  const funcoes = { dashboard:renderDashboard, eventos:renderEventos, pessoas:renderPessoas, votantes:renderVotantes, atendimentos:renderAtendimentos, transportes:renderTransportes, equipamentos:renderEquipamentos, agenda:renderAgenda, relatorios:renderRelatorios, usuarios:renderUsuarios, configuracoes:renderConfiguracoes };
   funcoes[pagina]();
 }
 
-// ---------------- HELPERS FIRESTORE ----------------
 async function listarColecao(nome){
   const snap = await getDocs(query(collection(db,nome), orderBy('criadoEm','desc')));
   return snap.docs.map(d=>({ id:d.id, ...d.data() }));
 }
-// Listagem simples, sem depender do campo criadoEm — usada pras coleções de
-// configuração (tipos), que podem ser cadastradas de qualquer jeito.
 async function listarColecaoSimples(nome){
   const snap = await getDocs(collection(db,nome));
   return snap.docs.map(d=>({ id:d.id, ...d.data() })).sort((a,b)=>String(a.nome||'').localeCompare(String(b.nome||'')));
@@ -726,13 +686,8 @@ async function salvarDoc(colecaoNome, id, dados){
   }
 }
 
-// ============================================================
-// DASHBOARD
-// ============================================================
 let chartsDashboardAtivos = [];
 
-// dd/mm/aaaa -> Date (ou null se inválido). Reaproveitado em vários lugares
-// do Dashboard pra ordenar por data mais próxima.
 function parseDataBRGlobal(str){
   const p = String(str||'').split('/');
   if(p.length !== 3) return null;
@@ -759,7 +714,6 @@ async function renderDashboard(){
   const transpConfirmados = transp.filter(t=>normalizarTexto(t.confirmado)==='SIM').length;
   const equipEmUso = equip.filter(e=>normalizarTexto(e.devolucao)==='USANDO').length;
 
-  // --- Agrupamentos pros gráficos ---
   const porTipo = {};
   atend.forEach(a=>{ const t = a.tipoAtendimento || 'Sem tipo'; porTipo[t] = (porTipo[t]||0)+1; });
   const tiposOrdenados = Object.entries(porTipo).sort((a,b)=>b[1]-a[1]);
@@ -885,7 +839,6 @@ async function renderDashboard(){
     </div>
   `;
 
-  // ---- Monta os gráficos (Chart.js) ----
   const corTexto = '#9FB3A6';
   const corGrade = 'rgba(159,179,166,.12)';
   Chart.defaults.font.family = "'Inter', sans-serif";
@@ -955,9 +908,6 @@ async function renderDashboard(){
   }
 }
 
-// ============================================================
-// ATENDIMENTOS
-// ============================================================
 let atendimentosCache = [];
 let atendimentosFiltradosAtual = [];
 
@@ -1067,12 +1017,17 @@ window.abrirModalAtendimento = function(registro){
         <div class="campo-2"><label>Observações</label><textarea id="m_obs" rows="3">${registro.observacoes||''}</textarea></div>
         <div class="campo-2">
           <label>Anexos (RG, laudo, comprovante...)</label>
-          ${registro.id ? `
+          ${!CONFIG_GERAL.anexosHabilitados ? `
+            <div style="background:var(--superficie-2);border:1px dashed var(--borda);border-radius:var(--raio-s);padding:10px 12px;font-size:11.5px;color:var(--texto-fraco);">
+              🔒 Recurso pago. Para desbloquear o envio de anexos, fale com o desenvolvedor.
+            </div>
+          ` : registro.id ? `
             <div id="listaAnexosAtend"></div>
             ${somenteLeitura() ? '' : `<div class="anexo-upload">
-              <input type="file" id="inputAnexoAtend" multiple>
+              <input type="file" id="inputAnexoAtend" multiple accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx">
               <button type="button" class="btn-secundario" onclick="window.enviarAnexosAtendimento('${registro.id}')">Enviar</button>
-            </div>`}
+            </div>
+            <p style="color:#5E7368;font-size:10.5px;margin:6px 0 0;">Até 5 arquivos por envio, 8MB cada.</p>`}
           ` : `<p style="color:#5E7368;font-size:11.5px;margin:0;">Salve o atendimento primeiro pra poder anexar documentos.</p>`}
         </div>
       </div>
@@ -1083,11 +1038,9 @@ window.abrirModalAtendimento = function(registro){
     </div>`;
   document.body.appendChild(fundo);
   ligarBuscaPessoa('m', { nome:'m_nome', telefone:'m_telefone', endereco:'m_endereco', bairro:'m_bairro' });
-  if(registro.id) renderizarListaAnexos(registro.id, registro.anexos||[]);
+  if(registro.id && CONFIG_GERAL.anexosHabilitados) renderizarListaAnexos(registro.id, registro.anexos||[]);
 };
 
-// Mostra a lista de anexos já enviados dentro do modal de Atendimento,
-// com link pra abrir cada um e botão de excluir.
 function renderizarListaAnexos(atendimentoId, anexos){
   const container = document.getElementById('listaAnexosAtend');
   if(!container) return;
@@ -1102,20 +1055,35 @@ function renderizarListaAnexos(atendimentoId, anexos){
     </div>`).join('');
 }
 
+const LIMITE_ANEXO_MB = 8;
+const LIMITE_ANEXOS_POR_ENVIO = 5;
+function sanitizarNomeArquivo(nome){
+  return String(nome||'arquivo').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9.\-_]/g,'_');
+}
+
 window.enviarAnexosAtendimento = async function(atendimentoId){
   const input = document.getElementById('inputAnexoAtend');
   const arquivos = Array.from(input.files||[]);
   if(!arquivos.length){ mostrarToast('Escolha ao menos um arquivo.', 'aviso'); return; }
+  if(arquivos.length > LIMITE_ANEXOS_POR_ENVIO){
+    mostrarToast('Selecione no máximo '+LIMITE_ANEXOS_POR_ENVIO+' arquivos por vez.', 'aviso');
+    return;
+  }
+  const grandeDemais = arquivos.find(f=>f.size > LIMITE_ANEXO_MB*1024*1024);
+  if(grandeDemais){
+    mostrarToast('O arquivo "'+grandeDemais.name+'" passa de '+LIMITE_ANEXO_MB+'MB.', 'aviso');
+    return;
+  }
   try{
     const snap = await getDoc(doc(db,'atendimentos',atendimentoId));
     const anexosAtuais = (snap.exists() && snap.data().anexos) || [];
     const novosAnexos = [];
     for(const arquivo of arquivos){
-      const caminho = 'atendimentos/'+atendimentoId+'/'+Date.now()+'_'+arquivo.name;
+      const caminho = 'atendimentos/'+atendimentoId+'/'+Date.now()+'_'+sanitizarNomeArquivo(arquivo.name);
       const refArquivo = ref(storage, caminho);
       await uploadBytes(refArquivo, arquivo);
       const url = await getDownloadURL(refArquivo);
-      novosAnexos.push({ nome: arquivo.name, url, caminho });
+      novosAnexos.push({ nome: arquivo.name, url, caminho, tamanho: arquivo.size });
     }
     const anexosFinal = anexosAtuais.concat(novosAnexos);
     await updateDoc(doc(db,'atendimentos',atendimentoId), { anexos: anexosFinal, qtdAnexos: anexosFinal.length });
@@ -1180,9 +1148,6 @@ window.salvarAtendimento = async function(id){
   }
 };
 
-// ============================================================
-// TRANSPORTES
-// ============================================================
 let transportesCache = [];
 
 async function renderTransportes(){
@@ -1282,9 +1247,6 @@ window.salvarTransporte = async function(id){
   }
 };
 
-// ============================================================
-// EQUIPAMENTOS
-// ============================================================
 let equipCache = [];
 
 async function renderEquipamentos(){
@@ -1294,9 +1256,6 @@ async function renderEquipamentos(){
   desenharEquipamentos();
 }
 
-// Converte o criadoEm (Timestamp do Firestore) em dias corridos desde o
-// empréstimo — usado pra sinalizar equipamento parado há muito tempo, já
-// que o cadastro de Equipamentos não tinha nenhum campo de data.
 function diasEmprestado(criadoEm){
   if(!criadoEm || typeof criadoEm.toDate !== 'function') return null;
   const hoje = new Date();
@@ -1409,10 +1368,6 @@ window.salvarEquipamento = async function(id){
   }
 };
 
-// ============================================================
-// AGENDA — estilo Google Agenda: calendário do mês à esquerda,
-// compromissos do dia selecionado à direita.
-// ============================================================
 let agendaCache = [];
 let agendaMes = new Date().getMonth();
 let agendaAno = new Date().getFullYear();
@@ -1480,8 +1435,10 @@ function desenharAgenda(){
 
   c.innerHTML = `
     <div class="topo-pagina">
-      <div><h2>Agenda</h2><div class="barra-assinatura"></div></div>
-      ${botaoNovo}
+      <div class="linha-titulo-acao">
+        <div><h2>Agenda</h2><div class="barra-assinatura"></div></div>
+        ${botaoNovo}
+      </div>
     </div>
     <div class="agenda-layout">
       <div class="agenda-box">
@@ -1550,9 +1507,6 @@ window.selecionarDiaAgenda = function(dia){
 window.mudarMesAgenda = mudarMesAgenda;
 window.irParaHojeAgenda = irParaHojeAgenda;
 
-// Lê o dia selecionado NA HORA do clique (não no momento em que a tela foi
-// desenhada) — corrige o bug de sempre abrir com a data de hoje mesmo depois
-// de clicar em outro dia do calendário.
 window.abrirNovoCompromisso = function(){
   const dataPreSelecionada = agendaDiaSelecionado ? chaveDataAgenda(agendaDiaSelecionado, agendaMes, agendaAno) : '';
   window.abrirModalEvento(null, dataPreSelecionada);
@@ -1621,10 +1575,6 @@ window.salvarEvento = async function(id){
   }
 };
 
-// ============================================================
-// EVENTOS — festas, inaugurações, agendas do vereador (diferente
-// da Agenda pessoal: aqui é pra planejar/acompanhar eventos maiores)
-// ============================================================
 let eventosCache = [];
 
 async function renderEventos(){
@@ -1649,19 +1599,21 @@ function desenharEventos(){
 
   c.innerHTML = `
     <div class="topo-pagina">
-      <div class="cabecalho-titulo">
-        <h2>Controle de <span class="destaque">Eventos</span></h2>
-        <p>Festas, inaugurações e compromissos maiores da agenda pública.</p>
+      <div class="linha-titulo-acao">
+        <div class="cabecalho-titulo">
+          <h2>Controle de <span class="destaque">Eventos</span></h2>
+          <p>Festas, inaugurações e compromissos maiores da agenda pública.</p>
+        </div>
+        <div class="grupo-acoes-topo">
+          <button class="btn-secundario" onclick="window.exportarEventosCSV()">⬇ Exportar CSV</button>
+          ${botaoNovo}
+        </div>
       </div>
       <div class="kpis-mini-row">
         ${kpiMini('rgba(22,163,74,.18)','#3FD17D','🎉',total,'Total')}
         ${kpiMini('rgba(59,130,246,.18)','#60A5FA','✅',confirmados,'Confirmados')}
         ${kpiMini('rgba(232,174,0,.18)','#F2C43D','🏁',realizados,'Realizados')}
         ${kpiMini('rgba(168,85,247,.18)','#C084FC','📅',esteMes,'Este Mês')}
-      </div>
-      <div class="grupo-acoes-topo">
-        <button class="btn-secundario" onclick="window.exportarEventosCSV()">⬇ Exportar CSV</button>
-        ${botaoNovo}
       </div>
     </div>
     <div class="tabela-box">
@@ -1738,10 +1690,6 @@ window.salvarEvt = async function(id){
   }
 };
 
-// ============================================================
-// PESSOAS — cadastro central. Alimenta o autopreenchimento em
-// Atendimentos/Transportes/Equipamentos e o painel de aniversariantes.
-// ============================================================
 async function renderPessoas(){
   const c = document.getElementById('conteudo');
   c.innerHTML = '<div class="topo-pagina"><div><h2>Cadastro de <span class="destaque">Pessoas</span></h2></div></div><p style="color:#9FB3A6;">Carregando...</p>';
@@ -1797,9 +1745,12 @@ function desenharPessoas(filtroTexto){
 
   c.innerHTML = `
     <div class="topo-pagina">
-      <div class="cabecalho-titulo">
-        <h2>Cadastro de <span class="destaque">Pessoas</span></h2>
-        <p>Base única de contatos, usada nos outros módulos e nos aniversários.</p>
+      <div class="linha-titulo-acao">
+        <div class="cabecalho-titulo">
+          <h2>Cadastro de <span class="destaque">Pessoas</span></h2>
+          <p>Base única de contatos, usada nos outros módulos e nos aniversários.</p>
+        </div>
+        ${botaoNovo}
       </div>
       <div class="kpis-mini-row">
         ${kpiMini('rgba(22,163,74,.18)','#3FD17D','👤',total,'Total')}
@@ -1807,7 +1758,6 @@ function desenharPessoas(filtroTexto){
         ${kpiMini('rgba(168,85,247,.18)','#C084FC','📆',aniversariantesMes,'Aniversário no Mês')}
         ${kpiMini('rgba(59,130,246,.18)','#60A5FA','📍',comEndereco,'Com Bairro')}
       </div>
-      ${botaoNovo}
     </div>
 
     <div class="graficos-dashboard-grid">
@@ -1870,11 +1820,6 @@ window.exportarPessoasCSV = function(){
   ], pessoasFiltradasAtual);
 };
 
-// ============================================================
-// VOTANTES — lista filtrada por intenção de voto, separada do Cadastro
-// completo, pra facilitar quando for a hora de mandar mensagem em massa
-// (manual, um a um, pelo link do WhatsApp).
-// ============================================================
 let filtroVotantesAtual = 'SIM';
 let votantesFiltradosAtual = [];
 
@@ -2000,8 +1945,6 @@ window.abrirModalPessoa = function(registro){
   window.marcarIntencaoVoto(registro.intencaoVoto || '', true);
 };
 
-// Marca visualmente qual botão de intenção de voto está selecionado (toggle:
-// clicar de novo no mesmo desmarca, deixando "não informado").
 window.marcarIntencaoVoto = function(valor, apenasAplicarSemAlternar){
   const campoOculto = document.getElementById('p_intencao');
   if(!campoOculto) return;
@@ -2049,9 +1992,6 @@ window.salvarPessoa = async function(id){
   }
 };
 
-// Busca rápida de pessoa cadastrada — usada nos formulários de Atendimento,
-// Transporte e Equipamento pra identificar alguém sem digitar tudo de novo.
-// Busca por nome, CPF, RG, título de eleitor ou telefone.
 function campoBuscaPessoa(prefixo){
   return `
     <div class="campo-2 busca-pessoa-wrap" style="position:relative;">
@@ -2110,12 +2050,62 @@ function ligarBuscaPessoa(prefixo, mapaCampos){
 }
 
 // ============================================================
-// CONFIGURAÇÕES (só ADMIN) — cadastra os tipos usados nos formulários
-// de Atendimentos (ex: CESTA BÁSICA, CONSULTA, PATROCÍNIO) e de
-// Equipamentos (ex: CADEIRA DE RODAS, ANDADOR, COLCHÃO). Ninguém além
-// do ADMIN pode mexer aqui — reforçado tanto na tela quanto nas regras
-// do Firestore (souAdmin()).
+// RELATÓRIOS — visão consolidada de todos os módulos, num só lugar.
 // ============================================================
+async function renderRelatorios(){
+  const c = document.getElementById('conteudo');
+  c.innerHTML = '<div class="topo-pagina"><div><h2>Relatórios <span class="destaque">Gerais</span></h2><div class="barra-assinatura"></div></div></div><p style="color:#9FB3A6;">Carregando...</p>';
+
+  const [atend, transp, equip, pessoas, eventosDb, agendaEv] = await Promise.all([
+    listarColecaoSimples('atendimentos'), listarColecaoSimples('transportes'), listarColecaoSimples('equipamentos'),
+    listarColecaoSimples('pessoas'), listarColecaoSimples('eventos'), listarColecaoSimples('agendaEventos')
+  ]);
+
+  const concluidos = atend.filter(a=>normalizarTexto(a.status)==='CONCLUIDO').length;
+  const emAnalise = atend.filter(a=>normalizarTexto(a.status)==='EM ANALISE').length;
+  const confirmados = transp.filter(t=>normalizarTexto(t.confirmado)==='SIM').length;
+  const emUso = equip.filter(e=>normalizarTexto(e.devolucao)==='USANDO').length;
+
+  const porTipo = {};
+  atend.forEach(a=>{ const t = a.tipoAtendimento || 'Sem tipo'; porTipo[t] = (porTipo[t]||0)+1; });
+  const topTipos = Object.entries(porTipo).sort((a,b)=>b[1]-a[1]).slice(0,8);
+
+  c.innerHTML = `
+    <div class="topo-pagina">
+      <div class="linha-titulo-acao">
+        <div><h2>Relatórios <span class="destaque">Gerais</span></h2><div class="barra-assinatura"></div></div>
+        <button class="btn-secundario" onclick="window.irPara('relatorios')">↻ Atualizar</button>
+      </div>
+    </div>
+    <div class="kpis" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));">
+      <div class="kpi"><div class="num">${atend.length}</div><div class="rot">Atendimentos</div></div>
+      <div class="kpi"><div class="num">${pessoas.length}</div><div class="rot">Pessoas Cadastradas</div></div>
+      <div class="kpi"><div class="num">${transp.length}</div><div class="rot">Transportes</div></div>
+      <div class="kpi"><div class="num">${equip.length}</div><div class="rot">Equipamentos</div></div>
+      <div class="kpi"><div class="num">${eventosDb.length}</div><div class="rot">Eventos</div></div>
+      <div class="kpi"><div class="num">${agendaEv.length}</div><div class="rot">Compromissos Agenda</div></div>
+      <div class="kpi"><div class="num">${concluidos}</div><div class="rot">Atendimentos Concluídos</div></div>
+      <div class="kpi"><div class="num">${emAnalise}</div><div class="rot">Em Análise</div></div>
+    </div>
+    <div class="graficos-dashboard-grid">
+      <div class="agenda-box" style="height:auto;">
+        <h3 style="margin:0 0 14px;font-size:13px;color:var(--texto-suave);text-transform:uppercase;letter-spacing:.4px;">Resumo Operacional</h3>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div style="display:flex;justify-content:space-between;padding:8px 12px;background:var(--superficie-2);border-radius:8px;"><b style="color:#fff;font-size:12.5px;">Transportes confirmados</b><strong>${confirmados}</strong></div>
+          <div style="display:flex;justify-content:space-between;padding:8px 12px;background:var(--superficie-2);border-radius:8px;"><b style="color:#fff;font-size:12.5px;">Equipamentos em uso</b><strong>${emUso}</strong></div>
+          <div style="display:flex;justify-content:space-between;padding:8px 12px;background:var(--superficie-2);border-radius:8px;"><b style="color:#fff;font-size:12.5px;">Taxa de conclusão</b><strong>${atend.length?Math.round(concluidos/atend.length*100):0}%</strong></div>
+        </div>
+      </div>
+      <div class="agenda-box" style="height:auto;">
+        <h3 style="margin:0 0 14px;font-size:13px;color:var(--texto-suave);text-transform:uppercase;letter-spacing:.4px;">Atendimentos por Tipo</h3>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          ${topTipos.length ? topTipos.map(([nome,qtd])=>`<div style="display:flex;justify-content:space-between;padding:8px 12px;background:var(--superficie-2);border-radius:8px;"><b style="color:#fff;font-size:12.5px;">${nome}</b><strong>${qtd}</strong></div>`).join('') : '<p style="color:#5E7368;font-size:12px;">Nenhum atendimento cadastrado.</p>'}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
 async function renderConfiguracoes(){
   if(USUARIO.cargo !== 'ADMIN'){
     document.getElementById('conteudo').innerHTML = '<div class="topo-pagina"><div><h2>Acesso restrito</h2></div></div><p style="color:#9FB3A6;">Esta área é exclusiva do administrador.</p>';
@@ -2165,9 +2155,37 @@ function desenharConfiguracoes(){
         </div>
       </div>
 
+      <div class="agenda-box" style="height:auto;grid-column:1/-1;border-color:rgba(168,85,247,.35);">
+        <h3 style="margin:0 0 4px;font-size:15px;color:#fff;">Anexos de Documentação <span style="display:inline-flex;align-items:center;padding:3px 9px;border-radius:20px;background:rgba(168,85,247,.16);color:#C084FC;font-size:9.5px;font-weight:900;text-transform:uppercase;letter-spacing:.4px;margin-left:8px;vertical-align:middle;">Recurso pago</span></h3>
+        <p style="font-size:11.5px;color:var(--texto-suave);margin:0 0 14px;">Libera o campo de anexo (foto, PDF, comprovante) no formulário de Atendimento. É um recurso pago contratado à parte — mantenha desligado até confirmar a contratação.</p>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 14px;background:var(--superficie-2);border-radius:10px;">
+          <div>
+            <b style="font-size:13px;color:#fff;">Habilitar anexos</b>
+            <div style="font-size:11px;color:var(--texto-fraco);margin-top:3px;">Quando ligado, todo mundo do gabinete passa a ver o campo de upload.</div>
+          </div>
+          <label style="position:relative;display:inline-block;width:46px;height:26px;flex-shrink:0;">
+            <input type="checkbox" id="toggleAnexosHabilitados" ${CONFIG_GERAL.anexosHabilitados?'checked':''} onchange="window.alternarAnexosHabilitados(this.checked)" style="opacity:0;width:0;height:0;">
+            <span style="position:absolute;cursor:pointer;inset:0;background:${CONFIG_GERAL.anexosHabilitados?'#16A34A':'#28415D'};border-radius:26px;transition:.18s;"></span>
+            <span style="position:absolute;height:20px;width:20px;left:${CONFIG_GERAL.anexosHabilitados?'23px':'3px'};top:3px;background:#fff;border-radius:50%;transition:.18s;pointer-events:none;"></span>
+          </label>
+        </div>
+      </div>
+
     </div>
   `;
 }
+
+window.alternarAnexosHabilitados = async function(ligado){
+  const chave = document.getElementById('toggleAnexosHabilitados');
+  if(chave) chave.disabled = true;
+  try{
+    await setDoc(doc(db,'configuracoes','geral'), { anexosHabilitados: ligado===true }, { merge:true });
+    desenharConfiguracoes();
+  }catch(erro){
+    mostrarToast('Não foi possível salvar essa configuração. ('+erro.message+')', 'erro');
+    if(chave){ chave.checked = !ligado; chave.disabled = false; }
+  }
+};
 
 window.adicionarTipoAtendimento = async function(){
   const campo = document.getElementById('novoTipoAtendimento');
@@ -2219,14 +2237,6 @@ window.excluirTipoEquipamento = async function(id){
   }
 };
 
-// ============================================================
-// USUÁRIOS (só ADMIN) — bloquear/desbloquear, trocar cargo
-// IMPORTANTE: criar um LOGIN novo (e-mail/senha) tem que ser feito no
-// Firebase Console > Authentication > Add user, porque criar pelo app
-// derrubaria a sua própria sessão de admin (limitação do Firebase, não
-// do sistema). Depois de criar o login lá, você cria o PERFIL aqui,
-// colando o UID que o Console mostrou.
-// ============================================================
 let usuariosCache = [];
 
 async function renderUsuarios(){
@@ -2245,8 +2255,10 @@ function desenharUsuarios(){
   const c = document.getElementById('conteudo');
   c.innerHTML = `
     <div class="topo-pagina">
-      <div><h2>Controle de <span class="destaque">Usuários</span></h2><div class="barra-assinatura"></div></div>
-      <button class="btn-primario" onclick="window.abrirModalUsuario()">+ Novo Perfil</button>
+      <div class="linha-titulo-acao">
+        <div><h2>Controle de <span class="destaque">Usuários</span></h2><div class="barra-assinatura"></div></div>
+        <button class="btn-primario" onclick="window.abrirModalUsuario()">+ Novo Perfil</button>
+      </div>
     </div>
     <div class="aviso-perfil">
       Pra criar um LOGIN novo (e-mail/senha), use o Firebase Console → Authentication → Add user.
@@ -2344,7 +2356,6 @@ window.salvarUsuario = async function(id){
 window.fazerLogin = fazerLogin;
 window.fazerLogout = fazerLogout;
 
-// Registra o service worker (necessário pro "Adicionar à tela inicial" aparecer)
 if('serviceWorker' in navigator){
   window.addEventListener('load', ()=>{
     navigator.serviceWorker.register('sw.js').catch(()=>{});
