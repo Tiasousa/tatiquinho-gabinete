@@ -124,6 +124,12 @@
   .meu-avatar-upload label{margin-bottom:8px;}
   .meu-avatar-upload input[type=file]{width:100%;padding:9px;background:var(--superficie);}
   .avatar-dica-topo{font-size:9px;color:var(--texto-fraco);margin-top:2px;}
+  .avatar-progresso-wrap{display:none;margin-top:12px;}
+  .avatar-progresso-wrap.ativo{display:block;}
+  .avatar-progresso-linha{height:7px;background:var(--superficie);border-radius:999px;overflow:hidden;border:1px solid var(--borda);}
+  .avatar-progresso-barra{height:100%;width:0%;background:var(--degrade-assinatura);transition:width .18s ease;}
+  .avatar-progresso-texto{display:flex;justify-content:space-between;gap:10px;margin-top:6px;font-size:10.5px;color:var(--texto-suave);}
+
   .perfil-texto{display:flex;flex-direction:column;line-height:1.25;}
   .perfil-texto b{font-size:12.5px;color:#fff;}
   .perfil-texto span{font-size:10.5px;color:var(--texto-suave);}
@@ -548,7 +554,7 @@ import {
   query, orderBy, onSnapshot, serverTimestamp, where
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 import {
-  getStorage, ref, uploadBytes, getDownloadURL, deleteObject
+  getStorage, ref, uploadBytes, uploadBytesResumable, getDownloadURL, deleteObject
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-storage.js";
 
 const firebaseConfig = {
@@ -2655,7 +2661,16 @@ window.abrirMeuAvatar = function(){
           accept="image/jpeg,image/png,image/webp"
           onchange="window.previsualizarMeuAvatar(this)">
         <div class="foto-usuario-ajuda" style="margin-top:8px;">
-          JPG, PNG ou WEBP · máximo 2 MB. A foto será enquadrada automaticamente no círculo do avatar.
+          JPG, PNG ou WEBP · máximo 2 MB. Antes do envio, a imagem é otimizada automaticamente para carregar mais rápido.
+        </div>
+        <div class="avatar-progresso-wrap" id="meuAvatarProgressoWrap">
+          <div class="avatar-progresso-linha">
+            <div class="avatar-progresso-barra" id="meuAvatarProgressoBarra"></div>
+          </div>
+          <div class="avatar-progresso-texto">
+            <span id="meuAvatarProgressoStatus">Preparando foto...</span>
+            <span id="meuAvatarProgressoPct">0%</span>
+          </div>
         </div>
       </div>
 
@@ -2695,25 +2710,108 @@ window.previsualizarMeuAvatar = function(input){
   leitor.readAsDataURL(arquivo);
 };
 
+
+async function otimizarImagemAvatar(arquivo){
+  return new Promise((resolve, reject)=>{
+    const img = new Image();
+    const urlTemp = URL.createObjectURL(arquivo);
+
+    img.onload = ()=>{
+      try{
+        const lado = Math.min(img.naturalWidth, img.naturalHeight);
+        const sx = Math.max(0, (img.naturalWidth - lado) / 2);
+        const sy = Math.max(0, (img.naturalHeight - lado) / 2);
+
+        const canvas = document.createElement('canvas');
+        canvas.width = 512;
+        canvas.height = 512;
+
+        const ctx = canvas.getContext('2d', { alpha:false });
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0,0,512,512);
+        ctx.drawImage(img, sx, sy, lado, lado, 0, 0, 512, 512);
+
+        canvas.toBlob(blob=>{
+          URL.revokeObjectURL(urlTemp);
+          if(!blob){
+            reject(new Error('Não foi possível otimizar a imagem.'));
+            return;
+          }
+          resolve(new File([blob], 'avatar.jpg', { type:'image/jpeg' }));
+        }, 'image/jpeg', 0.82);
+      }catch(erro){
+        URL.revokeObjectURL(urlTemp);
+        reject(erro);
+      }
+    };
+
+    img.onerror = ()=>{
+      URL.revokeObjectURL(urlTemp);
+      reject(new Error('Não foi possível ler a imagem selecionada.'));
+    };
+
+    img.src = urlTemp;
+  });
+}
+
+function atualizarProgressoAvatar(percentual, status){
+  const wrap = document.getElementById('meuAvatarProgressoWrap');
+  const barra = document.getElementById('meuAvatarProgressoBarra');
+  const pct = document.getElementById('meuAvatarProgressoPct');
+  const txt = document.getElementById('meuAvatarProgressoStatus');
+
+  if(wrap) wrap.classList.add('ativo');
+  if(barra) barra.style.width = Math.max(0,Math.min(100,percentual))+'%';
+  if(pct) pct.innerText = Math.round(percentual)+'%';
+  if(txt && status) txt.innerText = status;
+}
+
+function uploadAvatarComProgresso(fotoRef, arquivo){
+  return new Promise((resolve, reject)=>{
+    const tarefa = uploadBytesResumable(fotoRef, arquivo, { contentType:arquivo.type });
+
+    const timer = setTimeout(()=>{
+      try{ tarefa.cancel(); }catch(e){}
+      reject(new Error('O envio demorou mais de 30 segundos. Verifique a conexão ou as regras do Firebase Storage.'));
+    }, 30000);
+
+    tarefa.on('state_changed',
+      snap=>{
+        const pct = snap.totalBytes ? (snap.bytesTransferred / snap.totalBytes) * 100 : 0;
+        atualizarProgressoAvatar(Math.max(15, pct), 'Enviando foto...');
+      },
+      erro=>{
+        clearTimeout(timer);
+        reject(erro);
+      },
+      ()=>{
+        clearTimeout(timer);
+        atualizarProgressoAvatar(92, 'Finalizando...');
+        resolve(tarefa.snapshot);
+      }
+    );
+  });
+}
+
 window.salvarMeuAvatar = async function(){
   if(!USUARIO || !auth.currentUser) return;
 
   const input = document.getElementById('meuAvatarArquivo');
-  const arquivo = input && input.files ? input.files[0] : null;
+  const arquivoOriginal = input && input.files ? input.files[0] : null;
   const botao = document.getElementById('btnSalvarMeuAvatar');
 
-  if(!arquivo){
+  if(!arquivoOriginal){
     mostrarToast('Escolha uma foto antes de salvar.', 'aviso');
     return;
   }
 
   const tiposPermitidos = ['image/jpeg','image/png','image/webp'];
-  if(!tiposPermitidos.includes(arquivo.type)){
+  if(!tiposPermitidos.includes(arquivoOriginal.type)){
     mostrarToast('Use uma foto JPG, PNG ou WEBP.', 'aviso');
     return;
   }
 
-  if(arquivo.size > 2 * 1024 * 1024){
+  if(arquivoOriginal.size > 2 * 1024 * 1024){
     mostrarToast('A foto deve ter no máximo 2 MB.', 'aviso');
     return;
   }
@@ -2721,23 +2819,36 @@ window.salvarMeuAvatar = async function(){
   try{
     if(botao){
       botao.disabled = true;
-      botao.innerText = 'Salvando...';
+      botao.innerText = 'SALVANDO...';
     }
 
-    const extensao = (arquivo.name.split('.').pop() || 'jpg')
-      .toLowerCase()
-      .replace(/[^a-z0-9]/g,'');
+    atualizarProgressoAvatar(5, 'Otimizando foto...');
 
-    // Cada usuário grava apenas na própria pasta.
-    const caminho = 'usuarios/'+USUARIO.uid+'/avatar_atual.'+extensao;
+    // Reduz a imagem para 512x512 e comprime antes do upload.
+    // Isso deixa o avatar leve e evita enviar fotos grandes sem necessidade.
+    const arquivo = await otimizarImagemAvatar(arquivoOriginal);
+
+    atualizarProgressoAvatar(15, 'Iniciando envio...');
+
+    // Sempre usa o mesmo arquivo. Evita acumular várias fotos antigas no Storage.
+    const caminho = 'usuarios/'+USUARIO.uid+'/avatar.jpg';
     const fotoRef = ref(storage, caminho);
 
-    await uploadBytes(fotoRef, arquivo, { contentType:arquivo.type });
-    const url = await getDownloadURL(fotoRef);
+    await uploadAvatarComProgresso(fotoRef, arquivo);
 
-    // Salva a própria foto no perfil do Firebase Authentication.
-    // Não depende de permissão para editar a coleção "usuarios" no Firestore.
-    await updateProfile(auth.currentUser, { photoURL:url });
+    const urlBase = await getDownloadURL(fotoRef);
+    // Cache-buster para o navegador mostrar a foto nova imediatamente.
+    const url = urlBase + (urlBase.includes('?') ? '&' : '?') + 'v=' + Date.now();
+
+    atualizarProgressoAvatar(96, 'Atualizando perfil...');
+
+    await Promise.race([
+      updateProfile(auth.currentUser, { photoURL:urlBase }),
+      new Promise((_, reject)=>setTimeout(
+        ()=>reject(new Error('O Firebase Authentication demorou para responder. Tente novamente.')),
+        12000
+      ))
+    ]);
 
     USUARIO.foto = url;
 
@@ -2746,13 +2857,29 @@ window.salvarMeuAvatar = async function(){
       avatar.innerHTML = '<img src="'+url+'" alt="Foto de '+USUARIO.nome+'">';
     }
 
-    const fundo = document.getElementById('meuAvatarPreview')?.closest('.modal-fundo');
-    if(fundo) fundo.remove();
+    atualizarProgressoAvatar(100, 'Concluído');
 
-    mostrarToast('Sua foto foi atualizada!', 'sucesso');
+    const fundo = document.getElementById('meuAvatarPreview')?.closest('.modal-fundo');
+    setTimeout(()=>{
+      if(fundo) fundo.remove();
+      mostrarToast('Sua foto foi atualizada!', 'sucesso');
+    }, 250);
 
   }catch(erro){
-    mostrarToast('Não foi possível atualizar sua foto. ('+erro.message+')', 'erro');
+    console.error('Erro ao salvar avatar:', erro);
+
+    let mensagem = erro && erro.message ? erro.message : 'Erro desconhecido.';
+    if(erro && erro.code === 'storage/unauthorized'){
+      mensagem = 'Sem permissão para gravar a foto no Firebase Storage.';
+    }else if(erro && erro.code === 'storage/canceled'){
+      mensagem = 'O envio da foto foi cancelado ou demorou demais.';
+    }else if(erro && erro.code === 'storage/retry-limit-exceeded'){
+      mensagem = 'O Firebase não conseguiu concluir o envio. Verifique a conexão.';
+    }
+
+    atualizarProgressoAvatar(0, 'Falha no envio');
+    mostrarToast('Não foi possível atualizar sua foto. '+mensagem, 'erro');
+
   }finally{
     if(botao){
       botao.disabled = false;
