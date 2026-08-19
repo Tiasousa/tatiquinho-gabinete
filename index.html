@@ -1217,7 +1217,7 @@ window.abrirModalAtendimento = function(registro){
           <label>Anexos (RG, laudo, comprovante...)</label>
           ${!CONFIG_GERAL.anexosHabilitados ? `
             <div style="background:var(--superficie-2);border:1px dashed var(--borda);border-radius:var(--raio-s);padding:10px 12px;font-size:11.5px;color:var(--texto-fraco);">
-              🔒 Recurso pago. Para desbloquear o envio de anexos, fale com o desenvolvedor.
+              🔒 Anexos desabilitados pelo administrador.
             </div>
           ` : registro.id ? `
             <div id="listaAnexosAtend"></div>
@@ -2404,8 +2404,8 @@ function desenharConfiguracoes(){
       </div>
 
       <div class="agenda-box" style="height:auto;grid-column:1/-1;border-color:rgba(168,85,247,.35);">
-        <h3 style="margin:0 0 4px;font-size:15px;color:#fff;">Anexos de Documentação <span style="display:inline-flex;align-items:center;padding:3px 9px;border-radius:20px;background:rgba(168,85,247,.16);color:#C084FC;font-size:9.5px;font-weight:900;text-transform:uppercase;letter-spacing:.4px;margin-left:8px;vertical-align:middle;">Recurso pago</span></h3>
-        <p style="font-size:11.5px;color:var(--texto-suave);margin:0 0 14px;">Libera o campo de anexo (foto, PDF, comprovante) no formulário de Atendimento. É um recurso pago contratado à parte — mantenha desligado até confirmar a contratação.</p>
+        <h3 style="margin:0 0 4px;font-size:15px;color:#fff;">Anexos de Documentação</h3>
+        <p style="font-size:11.5px;color:var(--texto-suave);margin:0 0 14px;">Permite anexar fotos, PDFs e comprovantes aos atendimentos. Mantenha desligado enquanto o uso de anexos não estiver liberado.</p>
         <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 14px;background:var(--superficie-2);border-radius:10px;">
           <div>
             <b style="font-size:13px;color:#fff;">Habilitar anexos</b>
@@ -2549,7 +2549,7 @@ window.abrirModalUsuario = function(registro){
             <option value="ADMIN" ${registro.cargo==='ADMIN'?'selected':''}>Administrador</option>
             <option value="ASSESSOR" ${registro.cargo==='ASSESSOR'?'selected':''}>Assessor</option>
             <option value="ASSESSORA" ${registro.cargo==='ASSESSORA'?'selected':''}>Assessora</option>
-            <option value="VEREADOR" ${registro.cargo==='VEREADOR'?'selected':''}>Vereador (somente leitura)</option>
+            <option value="VEREADOR" ${registro.cargo==='VEREADOR'?'selected':''}>Vereador</option>
           </select>
         </div>
         <div>
