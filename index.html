@@ -103,7 +103,9 @@
   .saudacao-bloco h2{margin:0;font-size:19px;font-weight:700;color:#fff;}
   .saudacao-bloco span{font-size:11px;color:var(--texto-suave);}
   .topo-direita{display:flex;align-items:center;gap:14px;margin-left:auto;}
-  .avatar-topo{width:42px;height:42px;border-radius:50%;background:var(--verde);color:var(--limao);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;border:2px solid rgba(168,217,72,.28);overflow:hidden;flex-shrink:0;box-shadow:0 0 0 3px rgba(168,217,72,.04);}
+  .avatar-topo{width:42px;height:42px;border-radius:50%;background:var(--verde);color:var(--limao);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;border:2px solid rgba(168,217,72,.28);overflow:hidden;flex-shrink:0;box-shadow:0 0 0 3px rgba(168,217,72,.04);cursor:pointer;position:relative;transition:border-color .15s ease,transform .15s ease,box-shadow .15s ease;}
+  .avatar-topo:hover{border-color:var(--limao);transform:translateY(-1px);box-shadow:0 0 0 4px rgba(168,217,72,.08);}
+  .avatar-topo:focus-visible{outline:2px solid var(--limao);outline-offset:3px;}
   .avatar-topo img{width:100%;height:100%;object-fit:cover;object-position:center;border-radius:50%;display:block;}
   .foto-usuario-campo{grid-column:1/-1;display:flex;align-items:center;gap:16px;padding:14px;border:1px solid var(--borda);border-radius:var(--raio-m);background:var(--preto-suave);}
   .foto-usuario-preview{width:72px;height:72px;border-radius:50%;background:var(--verde-escuro);border:2px solid rgba(168,217,72,.32);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;color:var(--limao);font-weight:800;font-size:20px;}
@@ -112,6 +114,16 @@
   .foto-usuario-controles label{margin:0;}
   .foto-usuario-controles input[type=file]{padding:8px;background:var(--superficie);font-size:11.5px;}
   .foto-usuario-ajuda{font-size:10.5px;color:var(--texto-fraco);line-height:1.4;}
+  .meu-avatar-modal{width:480px;}
+  .meu-avatar-cabecalho{display:flex;align-items:center;gap:14px;margin-bottom:18px;}
+  .meu-avatar-cabecalho .foto-usuario-preview{width:82px;height:82px;}
+  .meu-avatar-identidade{display:flex;flex-direction:column;gap:3px;min-width:0;}
+  .meu-avatar-identidade b{font-size:15px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .meu-avatar-identidade span{font-size:11px;color:var(--texto-suave);}
+  .meu-avatar-upload{padding:14px;border:1px solid var(--borda);border-radius:var(--raio-m);background:var(--preto-suave);}
+  .meu-avatar-upload label{margin-bottom:8px;}
+  .meu-avatar-upload input[type=file]{width:100%;padding:9px;background:var(--superficie);}
+  .avatar-dica-topo{font-size:9px;color:var(--texto-fraco);margin-top:2px;}
   .perfil-texto{display:flex;flex-direction:column;line-height:1.25;}
   .perfil-texto b{font-size:12.5px;color:#fff;}
   .perfil-texto span{font-size:10.5px;color:var(--texto-suave);}
@@ -516,7 +528,7 @@
           <b id="nomeTopo">-</b>
           <span id="cargoTopo">-</span>
         </div>
-        <div class="avatar-topo" id="avatarTopo">-</div>
+        <div class="avatar-topo" id="avatarTopo" role="button" tabindex="0" title="Clique para alterar sua foto" onclick="window.abrirMeuAvatar()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.abrirMeuAvatar();}">-</div>
         <button class="btn-sair" onclick="fazerLogout()">Sair</button>
       </div>
     </div>
@@ -529,7 +541,7 @@
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
 import {
-  getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged
+  getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 import {
   getFirestore, collection, doc, getDoc, getDocs, setDoc, addDoc, updateDoc, deleteDoc,
@@ -758,7 +770,7 @@ onAuthStateChanged(auth, async (user) => {
     return;
   }
   const p = perfilSnap.data();
-  USUARIO = { uid:user.uid, email:user.email, nome:p.nome||user.email, cargo:normalizarTexto(p.cargo), ativo:true, foto:p.foto||null };
+  USUARIO = { uid:user.uid, email:user.email, nome:p.nome||user.email, cargo:normalizarTexto(p.cargo), ativo:true, foto:user.photoURL||p.foto||null };
   iniciarApp();
 
   if(pararVigiaPerfil) pararVigiaPerfil();
@@ -2522,15 +2534,6 @@ window.abrirModalUsuario = function(registro){
       ${!registro.id ? `<div class="aviso-perfil">Cole aqui o UID que o Firebase Console mostrou ao criar o login. Sem isso, o perfil não fica ligado a nenhum acesso real.</div>` : ''}
       <div class="modal-grid">
         ${!registro.id ? `<div class="campo-2"><label>UID (do Firebase Authentication)</label><input id="u_uid" placeholder="Cole o UID aqui"></div>` : ''}
-        <div class="foto-usuario-campo">
-          <div class="foto-usuario-preview" id="u_fotoPreview">
-            ${registro.foto ? `<img src="${registro.foto}" alt="Foto do usuário">` : iniciaisNome(registro.nome||'Usuário')}
-          </div>
-          <div class="foto-usuario-controles">
-            <label>Foto do avatar</label>
-            <input id="u_fotoArquivo" type="file" accept="image/jpeg,image/png,image/webp" onchange="window.previsualizarFotoUsuario(this)">
-            <div class="foto-usuario-ajuda">JPG, PNG ou WEBP · máximo 2 MB. A foto é cortada automaticamente em formato circular.</div>
-          </div>
         </div>
         <div><label>Nome</label><input id="u_nome" value="${registro.nome||''}"></div>
         <div><label>E-mail</label><input id="u_email" value="${registro.email||''}" ${registro.id?'disabled':''}></div>
@@ -2560,31 +2563,6 @@ window.abrirModalUsuario = function(registro){
 };
 
 
-window.previsualizarFotoUsuario = function(input){
-  const arquivo = input && input.files ? input.files[0] : null;
-  if(!arquivo) return;
-
-  const tiposPermitidos = ['image/jpeg','image/png','image/webp'];
-  if(!tiposPermitidos.includes(arquivo.type)){
-    mostrarToast('Use uma foto JPG, PNG ou WEBP.', 'aviso');
-    input.value = '';
-    return;
-  }
-  if(arquivo.size > 2 * 1024 * 1024){
-    mostrarToast('A foto deve ter no máximo 2 MB.', 'aviso');
-    input.value = '';
-    return;
-  }
-
-  const preview = document.getElementById('u_fotoPreview');
-  if(!preview) return;
-
-  const leitor = new FileReader();
-  leitor.onload = ev=>{
-    preview.innerHTML = '<img src="'+ev.target.result+'" alt="Prévia da foto">';
-  };
-  leitor.readAsDataURL(arquivo);
-};
 
 window.excluirUsuario = async function(id){
   if(id === USUARIO.uid){ mostrarToast('Você não pode excluir o seu próprio perfil.', 'aviso'); return; }
@@ -2619,46 +2597,12 @@ window.salvarUsuario = async function(id){
     return;
   }
 
-  const inputFoto = document.getElementById('u_fotoArquivo');
-  const arquivoFoto = inputFoto && inputFoto.files ? inputFoto.files[0] : null;
-
-  if(arquivoFoto){
-    const tiposPermitidos = ['image/jpeg','image/png','image/webp'];
-
-    if(!tiposPermitidos.includes(arquivoFoto.type)){
-      mostrarToast('Use uma foto JPG, PNG ou WEBP.', 'aviso');
-      return;
-    }
-    if(arquivoFoto.size > 2 * 1024 * 1024){
-      mostrarToast('A foto deve ter no máximo 2 MB.', 'aviso');
-      return;
-    }
-  }
-
   try{
-    if(arquivoFoto){
-      mostrarToast('Enviando foto...', 'info');
-
-      const extensaoOriginal = (arquivoFoto.name.split('.').pop() || 'jpg')
-        .toLowerCase()
-        .replace(/[^a-z0-9]/g,'');
-
-      const caminhoFoto = 'usuarios/'+uidFinal+'/avatar_'+Date.now()+'.'+extensaoOriginal;
-      const fotoRef = ref(storage, caminhoFoto);
-
-      await uploadBytes(fotoRef, arquivoFoto, {
-        contentType: arquivoFoto.type
-      });
-
-      dados.foto = await getDownloadURL(fotoRef);
-    }
-
     await setDoc(doc(db,'usuarios',uidFinal), dados, { merge:true });
 
     if(uidFinal === USUARIO.uid){
       USUARIO.nome = dados.nome;
       USUARIO.cargo = normalizarTexto(dados.cargo);
-      if(dados.foto) USUARIO.foto = dados.foto;
 
       document.getElementById('nomeTopo').innerText = USUARIO.nome;
       document.getElementById('cargoTopo').innerText = rotuloCargo(USUARIO.cargo);
@@ -2674,7 +2618,146 @@ window.salvarUsuario = async function(id){
     renderUsuarios();
 
   }catch(erro){
-    mostrarToast('Não foi possível salvar o perfil ou enviar a foto. ('+erro.message+')', 'erro');
+    mostrarToast('Não foi possível salvar o perfil. ('+erro.message+')', 'erro');
+  }
+};
+
+
+window.abrirMeuAvatar = function(){
+  if(!USUARIO) return;
+
+  const fundo = document.createElement('div');
+  fundo.className = 'modal-fundo';
+  fundo.onclick = (ev)=>{ if(ev.target===fundo) fundo.remove(); };
+
+  fundo.innerHTML = `
+    <div class="modal meu-avatar-modal" onclick="event.stopPropagation()">
+      <h3>Minha Foto de Perfil</h3>
+
+      <div class="meu-avatar-cabecalho">
+        <div class="foto-usuario-preview" id="meuAvatarPreview">
+          ${USUARIO.foto
+            ? `<img src="${USUARIO.foto}" alt="Sua foto de perfil">`
+            : iniciaisNome(USUARIO.nome)}
+        </div>
+        <div class="meu-avatar-identidade">
+          <b>${USUARIO.nome||''}</b>
+          <span>${rotuloCargo(USUARIO.cargo)}</span>
+          <span>${USUARIO.email||''}</span>
+        </div>
+      </div>
+
+      <div class="meu-avatar-upload">
+        <label>Escolha sua foto</label>
+        <input
+          id="meuAvatarArquivo"
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          onchange="window.previsualizarMeuAvatar(this)">
+        <div class="foto-usuario-ajuda" style="margin-top:8px;">
+          JPG, PNG ou WEBP · máximo 2 MB. A foto será enquadrada automaticamente no círculo do avatar.
+        </div>
+      </div>
+
+      <div class="modal-acoes">
+        <button class="btn-secundario" onclick="this.closest('.modal-fundo').remove()">Cancelar</button>
+        <button class="btn-primario" id="btnSalvarMeuAvatar" onclick="window.salvarMeuAvatar()">Salvar Foto</button>
+      </div>
+    </div>`;
+
+  document.body.appendChild(fundo);
+};
+
+window.previsualizarMeuAvatar = function(input){
+  const arquivo = input && input.files ? input.files[0] : null;
+  if(!arquivo) return;
+
+  const tiposPermitidos = ['image/jpeg','image/png','image/webp'];
+  if(!tiposPermitidos.includes(arquivo.type)){
+    mostrarToast('Use uma foto JPG, PNG ou WEBP.', 'aviso');
+    input.value = '';
+    return;
+  }
+
+  if(arquivo.size > 2 * 1024 * 1024){
+    mostrarToast('A foto deve ter no máximo 2 MB.', 'aviso');
+    input.value = '';
+    return;
+  }
+
+  const preview = document.getElementById('meuAvatarPreview');
+  if(!preview) return;
+
+  const leitor = new FileReader();
+  leitor.onload = ev=>{
+    preview.innerHTML = '<img src="'+ev.target.result+'" alt="Prévia da sua foto">';
+  };
+  leitor.readAsDataURL(arquivo);
+};
+
+window.salvarMeuAvatar = async function(){
+  if(!USUARIO || !auth.currentUser) return;
+
+  const input = document.getElementById('meuAvatarArquivo');
+  const arquivo = input && input.files ? input.files[0] : null;
+  const botao = document.getElementById('btnSalvarMeuAvatar');
+
+  if(!arquivo){
+    mostrarToast('Escolha uma foto antes de salvar.', 'aviso');
+    return;
+  }
+
+  const tiposPermitidos = ['image/jpeg','image/png','image/webp'];
+  if(!tiposPermitidos.includes(arquivo.type)){
+    mostrarToast('Use uma foto JPG, PNG ou WEBP.', 'aviso');
+    return;
+  }
+
+  if(arquivo.size > 2 * 1024 * 1024){
+    mostrarToast('A foto deve ter no máximo 2 MB.', 'aviso');
+    return;
+  }
+
+  try{
+    if(botao){
+      botao.disabled = true;
+      botao.innerText = 'Salvando...';
+    }
+
+    const extensao = (arquivo.name.split('.').pop() || 'jpg')
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g,'');
+
+    // Cada usuário grava apenas na própria pasta.
+    const caminho = 'usuarios/'+USUARIO.uid+'/avatar_atual.'+extensao;
+    const fotoRef = ref(storage, caminho);
+
+    await uploadBytes(fotoRef, arquivo, { contentType:arquivo.type });
+    const url = await getDownloadURL(fotoRef);
+
+    // Salva a própria foto no perfil do Firebase Authentication.
+    // Não depende de permissão para editar a coleção "usuarios" no Firestore.
+    await updateProfile(auth.currentUser, { photoURL:url });
+
+    USUARIO.foto = url;
+
+    const avatar = document.getElementById('avatarTopo');
+    if(avatar){
+      avatar.innerHTML = '<img src="'+url+'" alt="Foto de '+USUARIO.nome+'">';
+    }
+
+    const fundo = document.getElementById('meuAvatarPreview')?.closest('.modal-fundo');
+    if(fundo) fundo.remove();
+
+    mostrarToast('Sua foto foi atualizada!', 'sucesso');
+
+  }catch(erro){
+    mostrarToast('Não foi possível atualizar sua foto. ('+erro.message+')', 'erro');
+  }finally{
+    if(botao){
+      botao.disabled = false;
+      botao.innerText = 'Salvar Foto';
+    }
   }
 };
 
