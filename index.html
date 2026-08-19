@@ -103,7 +103,15 @@
   .saudacao-bloco h2{margin:0;font-size:19px;font-weight:700;color:#fff;}
   .saudacao-bloco span{font-size:11px;color:var(--texto-suave);}
   .topo-direita{display:flex;align-items:center;gap:14px;margin-left:auto;}
-  .avatar-topo{width:36px;height:36px;border-radius:50%;background:var(--verde);color:var(--limao);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;border:1px solid var(--borda);}
+  .avatar-topo{width:42px;height:42px;border-radius:50%;background:var(--verde);color:var(--limao);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;border:2px solid rgba(168,217,72,.28);overflow:hidden;flex-shrink:0;box-shadow:0 0 0 3px rgba(168,217,72,.04);}
+  .avatar-topo img{width:100%;height:100%;object-fit:cover;object-position:center;border-radius:50%;display:block;}
+  .foto-usuario-campo{grid-column:1/-1;display:flex;align-items:center;gap:16px;padding:14px;border:1px solid var(--borda);border-radius:var(--raio-m);background:var(--preto-suave);}
+  .foto-usuario-preview{width:72px;height:72px;border-radius:50%;background:var(--verde-escuro);border:2px solid rgba(168,217,72,.32);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;color:var(--limao);font-weight:800;font-size:20px;}
+  .foto-usuario-preview img{width:100%;height:100%;object-fit:cover;object-position:center;display:block;}
+  .foto-usuario-controles{display:flex;flex-direction:column;gap:7px;min-width:0;flex:1;}
+  .foto-usuario-controles label{margin:0;}
+  .foto-usuario-controles input[type=file]{padding:8px;background:var(--superficie);font-size:11.5px;}
+  .foto-usuario-ajuda{font-size:10.5px;color:var(--texto-fraco);line-height:1.4;}
   .perfil-texto{display:flex;flex-direction:column;line-height:1.25;}
   .perfil-texto b{font-size:12.5px;color:#fff;}
   .perfil-texto span{font-size:10.5px;color:var(--texto-suave);}
@@ -385,7 +393,10 @@
     .logo-topo .arroba{display:none;}
     .logo-topo h1{font-size:17px;}
     .topo-direita{gap:8px;}
-    .avatar-topo{width:32px;height:32px;}
+    .avatar-topo{width:36px;height:36px;}
+    .foto-usuario-campo{align-items:flex-start;gap:12px;}
+    .foto-usuario-preview{width:62px;height:62px;}
+    .foto-usuario-controles input[type=file]{width:100%;}
     .btn-sair{padding:8px 10px;font-size:11px;}
 
     nav.menu-nav{border-top:none;gap:8px;padding:8px 12px;-webkit-overflow-scrolling:touch;}
@@ -765,7 +776,7 @@ async function iniciarApp(){
   document.getElementById('nomeTopo').innerText = USUARIO.nome;
   document.getElementById('cargoTopo').innerText = rotuloCargo(USUARIO.cargo);
   const avatar = document.getElementById('avatarTopo');
-  avatar.innerHTML = USUARIO.foto ? '<img src="'+USUARIO.foto+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">' : iniciaisNome(USUARIO.nome);
+  avatar.innerHTML = USUARIO.foto ? '<img src="'+USUARIO.foto+'" alt="Foto de '+USUARIO.nome+'">' : iniciaisNome(USUARIO.nome);
 
   const hora = new Date().getHours();
   const saud = hora<12?'Bom dia':hora<18?'Boa tarde':'Boa noite';
@@ -2511,6 +2522,16 @@ window.abrirModalUsuario = function(registro){
       ${!registro.id ? `<div class="aviso-perfil">Cole aqui o UID que o Firebase Console mostrou ao criar o login. Sem isso, o perfil não fica ligado a nenhum acesso real.</div>` : ''}
       <div class="modal-grid">
         ${!registro.id ? `<div class="campo-2"><label>UID (do Firebase Authentication)</label><input id="u_uid" placeholder="Cole o UID aqui"></div>` : ''}
+        <div class="foto-usuario-campo">
+          <div class="foto-usuario-preview" id="u_fotoPreview">
+            ${registro.foto ? `<img src="${registro.foto}" alt="Foto do usuário">` : iniciaisNome(registro.nome||'Usuário')}
+          </div>
+          <div class="foto-usuario-controles">
+            <label>Foto do avatar</label>
+            <input id="u_fotoArquivo" type="file" accept="image/jpeg,image/png,image/webp" onchange="window.previsualizarFotoUsuario(this)">
+            <div class="foto-usuario-ajuda">JPG, PNG ou WEBP · máximo 2 MB. A foto é cortada automaticamente em formato circular.</div>
+          </div>
+        </div>
         <div><label>Nome</label><input id="u_nome" value="${registro.nome||''}"></div>
         <div><label>E-mail</label><input id="u_email" value="${registro.email||''}" ${registro.id?'disabled':''}></div>
         <div>
@@ -2538,6 +2559,33 @@ window.abrirModalUsuario = function(registro){
   document.body.appendChild(fundo);
 };
 
+
+window.previsualizarFotoUsuario = function(input){
+  const arquivo = input && input.files ? input.files[0] : null;
+  if(!arquivo) return;
+
+  const tiposPermitidos = ['image/jpeg','image/png','image/webp'];
+  if(!tiposPermitidos.includes(arquivo.type)){
+    mostrarToast('Use uma foto JPG, PNG ou WEBP.', 'aviso');
+    input.value = '';
+    return;
+  }
+  if(arquivo.size > 2 * 1024 * 1024){
+    mostrarToast('A foto deve ter no máximo 2 MB.', 'aviso');
+    input.value = '';
+    return;
+  }
+
+  const preview = document.getElementById('u_fotoPreview');
+  if(!preview) return;
+
+  const leitor = new FileReader();
+  leitor.onload = ev=>{
+    preview.innerHTML = '<img src="'+ev.target.result+'" alt="Prévia da foto">';
+  };
+  leitor.readAsDataURL(arquivo);
+};
+
 window.excluirUsuario = async function(id){
   if(id === USUARIO.uid){ mostrarToast('Você não pode excluir o seu próprio perfil.', 'aviso'); return; }
   if(!(await confirmarAcao('Excluir este perfil? A pessoa perde acesso ao sistema na hora. (O login dela continua existindo no Firebase Authentication — se quiser apagar de vez, remova também por lá.)', 'Excluir'))) return;
@@ -2556,19 +2604,77 @@ window.salvarUsuario = async function(id){
     cargo: document.getElementById('u_cargo').value,
     ativo: document.getElementById('u_ativo').value === 'true'
   };
+
   let uidFinal = id;
   if(!id){
     uidFinal = document.getElementById('u_uid').value.trim();
-    if(!uidFinal){ mostrarToast('Cole o UID do Firebase Authentication antes de salvar.', 'aviso'); return; }
+    if(!uidFinal){
+      mostrarToast('Cole o UID do Firebase Authentication antes de salvar.', 'aviso');
+      return;
+    }
   }
-  if(!dados.nome){ mostrarToast('Preencha o nome.', 'aviso'); return; }
+
+  if(!dados.nome){
+    mostrarToast('Preencha o nome.', 'aviso');
+    return;
+  }
+
+  const inputFoto = document.getElementById('u_fotoArquivo');
+  const arquivoFoto = inputFoto && inputFoto.files ? inputFoto.files[0] : null;
+
+  if(arquivoFoto){
+    const tiposPermitidos = ['image/jpeg','image/png','image/webp'];
+
+    if(!tiposPermitidos.includes(arquivoFoto.type)){
+      mostrarToast('Use uma foto JPG, PNG ou WEBP.', 'aviso');
+      return;
+    }
+    if(arquivoFoto.size > 2 * 1024 * 1024){
+      mostrarToast('A foto deve ter no máximo 2 MB.', 'aviso');
+      return;
+    }
+  }
+
   try{
+    if(arquivoFoto){
+      mostrarToast('Enviando foto...', 'info');
+
+      const extensaoOriginal = (arquivoFoto.name.split('.').pop() || 'jpg')
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g,'');
+
+      const caminhoFoto = 'usuarios/'+uidFinal+'/avatar_'+Date.now()+'.'+extensaoOriginal;
+      const fotoRef = ref(storage, caminhoFoto);
+
+      await uploadBytes(fotoRef, arquivoFoto, {
+        contentType: arquivoFoto.type
+      });
+
+      dados.foto = await getDownloadURL(fotoRef);
+    }
+
     await setDoc(doc(db,'usuarios',uidFinal), dados, { merge:true });
+
+    if(uidFinal === USUARIO.uid){
+      USUARIO.nome = dados.nome;
+      USUARIO.cargo = normalizarTexto(dados.cargo);
+      if(dados.foto) USUARIO.foto = dados.foto;
+
+      document.getElementById('nomeTopo').innerText = USUARIO.nome;
+      document.getElementById('cargoTopo').innerText = rotuloCargo(USUARIO.cargo);
+
+      const avatar = document.getElementById('avatarTopo');
+      avatar.innerHTML = USUARIO.foto
+        ? '<img src="'+USUARIO.foto+'" alt="Foto de '+USUARIO.nome+'">'
+        : iniciaisNome(USUARIO.nome);
+    }
+
     document.querySelector('.modal-fundo').remove();
     mostrarToast('Perfil salvo com sucesso!', 'sucesso');
     renderUsuarios();
+
   }catch(erro){
-    mostrarToast('Não foi possível salvar. Só ADMIN pode editar perfis. ('+erro.message+')', 'erro');
+    mostrarToast('Não foi possível salvar o perfil ou enviar a foto. ('+erro.message+')', 'erro');
   }
 };
 
